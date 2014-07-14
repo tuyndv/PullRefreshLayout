@@ -4,7 +4,6 @@ import android.content.Context;
 import android.support.v4.view.MotionEventCompat;
 import android.support.v4.view.ViewCompat;
 import android.util.AttributeSet;
-import android.util.DisplayMetrics;
 import android.util.Log;
 import android.view.MotionEvent;
 import android.view.View;
@@ -18,26 +17,24 @@ import android.widget.AbsListView;
 /**
  * 下拉刷新布局
  */
-public class PullRefreshLayout extends ViewGroup{
-    private static final String LOG_TAG = PullRefreshLayout.class.getSimpleName();
+public class PullRefreshLayout extends ViewGroup implements RefreshLayout2HeaderBridge {
+    private static final String NAME = PullRefreshLayout.class.getSimpleName();
     private static final float DECELERATE_INTERPOLATION_FACTOR = 2f;
-    private static final float MAX_SWIPE_DISTANCE_FACTOR = .6f;
-    private static final int REFRESH_TRIGGER_DISTANCE = 120;
     private static final int INVALID_POINTER = -1;
 
-    private View mTarget;
-    private int mOriginalOffsetTop;
-    private float mDistanceToTriggerSync = -1;  // 触发距离，当滑动距离大于等于这个触发距离的时候就自动触发，并且禁止滑动超过这个距离
+    private View mTargetView;
+    private View mRefreshHeaderView;
+    private RefreshHeader mRefreshHeader;
+    private int mBaselineOriginalOffset = -1;    // 基准线原始位置
     private int mCurrentTargetOffsetTop;
     private int mTouchSlop; // 触摸抖动范围，意思是说，移动距离超过此值才会被认为是一次移动操作，否则就是点击操作
-    private float mCurrPercentage = 0;
 
-    private float mInitialMotionY;  // 按下的时候记录Y位置
+    private float mDownMotionY;  // 按下的时候记录Y位置
     private float mLastMotionY; // 上一个Y位置，联合最新的Y位置计算移动量
     private int mActivePointerId = INVALID_POINTER;
     private boolean mReturningToStart;  // 标识是否正在返回到开始位置
     private boolean mIsBeingDragged;    // 标识是否开始拖拽
-    private final DecelerateInterpolator mDecelerateInterpolator;
+    private RollbackRunnable mRollbackRunnable; // 回滚器，用于回滚TargetView和HeaderView
 
     public PullRefreshLayout(Context context) {
         this(context, null);
@@ -47,39 +44,72 @@ public class PullRefreshLayout extends ViewGroup{
         super(context, attrs);
 
         mTouchSlop = ViewConfiguration.get(context).getScaledTouchSlop();
-        mMediumAnimationDuration = getResources().getInteger(
-                android.R.integer.config_mediumAnimTime);
-        mDecelerateInterpolator = new DecelerateInterpolator(DECELERATE_INTERPOLATION_FACTOR);
+        mRollbackRunnable = new RollbackRunnable(getResources().getInteger(android.R.integer.config_mediumAnimTime), new DecelerateInterpolator(DECELERATE_INTERPOLATION_FACTOR));
+        mBaselineOriginalOffset = getPaddingTop();
     }
 
     @Override
     public void onMeasure(int widthMeasureSpec, int heightMeasureSpec) {
         super.onMeasure(widthMeasureSpec, heightMeasureSpec);
-        if (getChildCount() > 1 && !isInEditMode()) {
-            throw new IllegalStateException("SwipeRefreshLayout can host only one direct child");
+
+        // 限制子视图数量不能少于1个
+        if (getChildCount() < 1){
+            throw new IllegalStateException(NAME+" can be only one directly child");
         }
-        if (getChildCount() > 0) {
-            getChildAt(0).measure(
-                    MeasureSpec.makeMeasureSpec(
-                            getMeasuredWidth() - getPaddingLeft() - getPaddingRight(),
-                            MeasureSpec.EXACTLY),
-                    MeasureSpec.makeMeasureSpec(
-                            getMeasuredHeight() - getPaddingTop() - getPaddingBottom(),
-                            MeasureSpec.EXACTLY));
+
+        // 限制子视图数量不能超过2个
+        if (getChildCount() > 2){
+            throw new IllegalStateException(NAME+" can host only two direct child");
         }
+
+        // 测量第一个子视图，由于第一个子视图被认定为内容体，所以其一定要充满PullRefreshLayout
+        int width = getMeasuredWidth() - getPaddingLeft() - getPaddingRight();
+        int height = getMeasuredHeight() - getPaddingTop() - getPaddingBottom();
+        getChildAt(0).measure(MeasureSpec.makeMeasureSpec(width, MeasureSpec.EXACTLY), MeasureSpec.makeMeasureSpec(height, MeasureSpec.EXACTLY));
+
+        if (getChildCount() < 2){
+            return;
+        }
+
+        // 确保HeaderView实现了RefreshHeader接口
+        if(!(getChildAt(1) instanceof RefreshHeader)){
+            throw new IllegalStateException(NAME+" the second view must implement "+RefreshHeader.class.getSimpleName()+" interface");
+        }
+
+        // 测量第二个子视图，由于第二个被认定为刷新头，所以其高度只能是UNSPECIFIED
+        getChildAt(1).measure(MeasureSpec.makeMeasureSpec(width, MeasureSpec.EXACTLY), MeasureSpec.makeMeasureSpec(height, MeasureSpec.UNSPECIFIED));
     }
 
     @Override
     protected void onLayout(boolean changed, int l, int t, int r, int b) {
-        if(getChildCount() == 0) return;
+        int childLeft = getPaddingLeft();
+        int childTop;
+        int childRight;
+        int childBottom;
+        View childView;
 
-        final View childView = getChildAt(0);
-        final int childLeft = getPaddingLeft();
-        final int childTop = mCurrentTargetOffsetTop + getPaddingTop();
-        final int childWidth = getMeasuredWidth() - getPaddingLeft() - getPaddingRight();
-        final int childHeight = getMeasuredHeight() - getPaddingTop() - getPaddingBottom();
+        // 布局第一个子视图
+        if(getChildCount() < 1) return;
+        childView = getChildAt(0);
+        childTop = getPaddingTop();
+        childRight = childLeft + childView.getMeasuredWidth();
+        int offset = 0;
+        if(mBaselineOriginalOffset != childTop){
+            offset = mBaselineOriginalOffset - childTop;
+        }
+        childBottom = (childTop + childView.getMeasuredHeight()) - offset;
+        childView.layout(childLeft, childTop, childRight, childBottom);
+        mTargetView = childView;
 
-        childView.layout(childLeft, childTop, childLeft + childWidth, childTop + childHeight);
+        // 布局第二个子视图
+        if(getChildCount() < 2) return;
+        childView = getChildAt(1);
+        childTop = getPaddingTop() - childView.getMeasuredHeight();
+        childRight = childLeft + childView.getMeasuredWidth();
+        childBottom = childTop + childView.getMeasuredHeight();
+        childView.layout(childLeft, childTop, childRight, childBottom);
+        mRefreshHeaderView = childView;
+        mRefreshHeader = (RefreshHeader) mRefreshHeaderView;
     }
 
     @Override
@@ -89,7 +119,6 @@ public class PullRefreshLayout extends ViewGroup{
 
     @Override
     public boolean onInterceptTouchEvent(MotionEvent ev) {
-        ensureTarget();
         final int action = MotionEventCompat.getActionMasked(ev);
 
         if (mReturningToStart && action == MotionEvent.ACTION_DOWN) {
@@ -103,45 +132,39 @@ public class PullRefreshLayout extends ViewGroup{
 
         switch (action) {
             case MotionEvent.ACTION_DOWN:
-                mLastMotionY = mInitialMotionY = ev.getY();
+                mDownMotionY = mLastMotionY = ev.getY();
                 mActivePointerId = MotionEventCompat.getPointerId(ev, 0);
                 mIsBeingDragged = false;
-                mCurrPercentage = 0;
-                Log.e("onInterceptTouchEvent", "ACTION_DOWN");
                 break;
 
             case MotionEvent.ACTION_MOVE:
-                Log.e("onInterceptTouchEvent", "ACTION_MOVE");
                 if (mActivePointerId == INVALID_POINTER) {
-                    Log.e(LOG_TAG, "Got ACTION_MOVE event but don't have an active pointer id.");
+                    Log.e(NAME, "Got ACTION_MOVE event but don't have an active pointer id.");
                     return false;
                 }
 
                 final int pointerIndex = MotionEventCompat.findPointerIndex(ev, mActivePointerId);
                 if (pointerIndex < 0) {
-                    Log.e(LOG_TAG, "Got ACTION_MOVE event but have an invalid active pointer id.");
+                    Log.e(NAME, "Got ACTION_MOVE event but have an invalid active pointer id.");
                     return false;
                 }
 
                 final float y = MotionEventCompat.getY(ev, pointerIndex);
-                final float yDiff = y - mInitialMotionY;
+                final float yDiff = y - mDownMotionY;
                 if (yDiff > mTouchSlop) {
                     mLastMotionY = y;
-                    mInitialMotionY = y;
+                    mDownMotionY = y;
                     mIsBeingDragged = true;
                 }
                 break;
 
             case MotionEventCompat.ACTION_POINTER_UP:
-                Log.e("onInterceptTouchEvent", "ACTION_POINTER_UP");
                 onSecondaryPointerUp(ev);
                 break;
 
             case MotionEvent.ACTION_UP:
             case MotionEvent.ACTION_CANCEL:
-                Log.e("onInterceptTouchEvent", "ACTION_UP");
                 mIsBeingDragged = false;
-                mCurrPercentage = 0;
                 mActivePointerId = INVALID_POINTER;
                 break;
         }
@@ -164,33 +187,30 @@ public class PullRefreshLayout extends ViewGroup{
 
         switch (action) {
             case MotionEvent.ACTION_DOWN:
-                Log.e("onTouchEvent", "ACTION_DOWN");
-                mLastMotionY = mInitialMotionY = ev.getY();
+                mDownMotionY = mLastMotionY = ev.getY();
                 mActivePointerId = MotionEventCompat.getPointerId(ev, 0);
                 mIsBeingDragged = false;
-                mCurrPercentage = 0;
                 break;
 
             case MotionEvent.ACTION_MOVE:
-                Log.e("onTouchEvent", "ACTION_MOVE");
                 final int pointerIndex = MotionEventCompat.findPointerIndex(ev, mActivePointerId);
                 if (pointerIndex < 0) {
-                    Log.e(LOG_TAG, "Got ACTION_MOVE event but have an invalid active pointer id.");
+                    Log.e(NAME, "Got ACTION_MOVE event but have an invalid active pointer id.");
                     return false;
                 }
 
                 final float y = MotionEventCompat.getY(ev, pointerIndex);
-                final float yDiff = y - mInitialMotionY;
+                final float yDiff = y - mDownMotionY;
 
                 if (!mIsBeingDragged && yDiff > mTouchSlop) {
                     mIsBeingDragged = true;
                 }
-                updateContentOffsetTop((int) (yDiff));
+                updateBaselineOffset((int) (y - mLastMotionY));
+                mRefreshHeader.onTouchMove((int) (y - mDownMotionY));
                 mLastMotionY = y;
                 break;
 
             case MotionEventCompat.ACTION_POINTER_DOWN: {
-                Log.e("onTouchEvent", "ACTION_POINTER_DOWN");
                 final int index = MotionEventCompat.getActionIndex(ev);
                 mLastMotionY = MotionEventCompat.getY(ev, index);
                 mActivePointerId = MotionEventCompat.getPointerId(ev, index);
@@ -198,17 +218,17 @@ public class PullRefreshLayout extends ViewGroup{
             }
 
             case MotionEventCompat.ACTION_POINTER_UP:
-                Log.e("onTouchEvent", "ACTION_POINTER_UP");
                 onSecondaryPointerUp(ev);
                 break;
 
             case MotionEvent.ACTION_UP:
             case MotionEvent.ACTION_CANCEL:
-                Log.e("onTouchEvent", "ACTION_UP");
                 mIsBeingDragged = false;
-                mCurrPercentage = 0;
                 mActivePointerId = INVALID_POINTER;
-                mReturnToStartPosition.run();
+                if(mRefreshHeader != null){
+                    mRefreshHeader.onTouchUp(this);
+                }
+                mRollbackRunnable.run();
                 return false;
         }
 
@@ -218,36 +238,13 @@ public class PullRefreshLayout extends ViewGroup{
     @Override
     public void onAttachedToWindow() {
         super.onAttachedToWindow();
-        removeCallbacks(mReturnToStartPosition);
+        removeCallbacks(mRollbackRunnable);
     }
 
     @Override
     public void onDetachedFromWindow() {
         super.onDetachedFromWindow();
-        removeCallbacks(mReturnToStartPosition);
-    }
-
-    /**
-     * 确保初始化目标视图
-     */
-    private void ensureTarget() {
-        // Don't bother getting the parent height if the parent hasn't been laid out yet.
-        if (mTarget == null) {
-            if (getChildCount() > 1 && !isInEditMode()) {
-                throw new IllegalStateException(
-                        "SwipeRefreshLayout can host only one direct child");
-            }
-            mTarget = getChildAt(0);
-            mOriginalOffsetTop = mTarget.getTop() + getPaddingTop();
-        }
-        if (mDistanceToTriggerSync == -1) {
-            if (getParent() != null && ((View)getParent()).getHeight() > 0) {
-                final DisplayMetrics metrics = getResources().getDisplayMetrics();
-                mDistanceToTriggerSync = (int) Math.min(
-                        ((View) getParent()) .getHeight() * MAX_SWIPE_DISTANCE_FACTOR,
-                        REFRESH_TRIGGER_DISTANCE * metrics.density);
-            }
-        }
+        removeCallbacks(mRollbackRunnable);
     }
 
     private void onSecondaryPointerUp(MotionEvent ev) {
@@ -268,95 +265,91 @@ public class PullRefreshLayout extends ViewGroup{
      */
     public boolean canChildScrollUp() {
         if (android.os.Build.VERSION.SDK_INT < 14) {
-            if (mTarget instanceof AbsListView) {
-                final AbsListView absListView = (AbsListView) mTarget;
+            if (mTargetView instanceof AbsListView) {
+                final AbsListView absListView = (AbsListView) mTargetView;
                 return absListView.getChildCount() > 0
                         && (absListView.getFirstVisiblePosition() > 0 || absListView.getChildAt(0)
                         .getTop() < absListView.getPaddingTop());
             } else {
-                return mTarget.getScrollY() > 0;
+                return mTargetView.getScrollY() > 0;
             }
         } else {
-            return ViewCompat.canScrollVertically(mTarget, -1);
+            return ViewCompat.canScrollVertically(mTargetView, -1);
         }
     }
 
-    private void updateContentOffsetTop(int targetTop) {
-        Log.e("targetTop", ""+targetTop);
-        final int currentTop = mTarget.getTop();
-//        if (targetTop > mDistanceToTriggerSync) {
-//            targetTop = (int) mDistanceToTriggerSync;
-//        } else
-        if (targetTop < 0) {
-            targetTop = 0;
+    /**
+     * 更新基准线位置偏移
+     * @param offset 偏移量
+     */
+    private void updateBaselineOffset(int offset) {
+        int result = mTargetView.getTop() + offset;
+        if(result < mBaselineOriginalOffset){
+            offset -= result;
         }
-        setTargetOffsetTopAndBottom(targetTop - currentTop);
+        mTargetView.offsetTopAndBottom(offset);
+        mRefreshHeaderView.offsetTopAndBottom(offset);
+
+        mCurrentTargetOffsetTop = mTargetView.getTop();
+        invalidate();
     }
 
-    private void setTargetOffsetTopAndBottom(int offset) {
-        Log.e("offset", ""+offset);
-        mTarget.offsetTopAndBottom(offset);
-        mCurrentTargetOffsetTop = mTarget.getTop();
+    @Override
+    public void setBaseLine(int newBaseLine) {
+        mBaselineOriginalOffset = newBaseLine + getPaddingTop();
+        requestLayout();
     }
 
-    private final Runnable mReturnToStartPosition = new Runnable() {
+    private class RollbackRunnable implements Runnable, Animation.AnimationListener {
+        private int mFrom;
+
+        private int animationDuration;
+        private DecelerateInterpolator mDecelerateInterpolator;
+        private RollbackAnimation rollbackAnimation;
+
+        private RollbackRunnable(int animationDuration, DecelerateInterpolator mDecelerateInterpolator) {
+            this.animationDuration = animationDuration;
+            this.rollbackAnimation = new RollbackAnimation();
+            this.mDecelerateInterpolator = mDecelerateInterpolator;
+        }
 
         @Override
         public void run() {
             mReturningToStart = true;
-            animateOffsetToStartPosition(mCurrentTargetOffsetTop + getPaddingTop(),
-                    mReturnToStartPositionListener);
+            mFrom = mCurrentTargetOffsetTop;
+            rollbackAnimation.reset();
+            rollbackAnimation.setDuration(animationDuration);
+            rollbackAnimation.setAnimationListener(this);
+            rollbackAnimation.setInterpolator(mDecelerateInterpolator);
+            mTargetView.startAnimation(rollbackAnimation);
         }
 
-    };
+        private class RollbackAnimation extends Animation {
+            @Override
+            public void applyTransformation(float interpolatedTime, Transformation t) {
+                int targetTop = 0;
+                if (mFrom != mBaselineOriginalOffset) {
+                    targetTop = (mFrom + (int)((mBaselineOriginalOffset - mFrom) * interpolatedTime));
+                }
+                int offset = targetTop - mTargetView.getTop();
+                final int currentTop = mTargetView.getTop();
+                if (offset + currentTop < 0) {
+                    offset = 0 - currentTop;
+                }
+                updateBaselineOffset(offset);
+            }
+        }
 
-    private void animateOffsetToStartPosition(int from, Animation.AnimationListener listener) {
-        mFrom = from;
-        mAnimateToStartPosition.reset();
-        mAnimateToStartPosition.setDuration(mMediumAnimationDuration);
-        mAnimateToStartPosition.setAnimationListener(listener);
-        mAnimateToStartPosition.setInterpolator(mDecelerateInterpolator);
-        mTarget.startAnimation(mAnimateToStartPosition);
-    }
-    private int mFrom;
-
-    private final Animation.AnimationListener mReturnToStartPositionListener = new BaseAnimationListener() {
         @Override
         public void onAnimationEnd(Animation animation) {
             // Once the target content has returned to its start position, reset
             // the target offset to 0
             mCurrentTargetOffsetTop = 0;
+            requestLayout();
         }
-    };
 
-    private int mMediumAnimationDuration;
-    private final Animation mAnimateToStartPosition = new Animation() {
-        @Override
-        public void applyTransformation(float interpolatedTime, Transformation t) {
-            int targetTop = 0;
-            if (mFrom != mOriginalOffsetTop) {
-                targetTop = (mFrom + (int)((mOriginalOffsetTop - mFrom) * interpolatedTime));
-            }
-            int offset = targetTop - mTarget.getTop();
-            final int currentTop = mTarget.getTop();
-            if (offset + currentTop < 0) {
-                offset = 0 - currentTop;
-            }
-            setTargetOffsetTopAndBottom(offset);
-        }
-    };
-
-    /**
-     * Simple AnimationListener to avoid having to implement unneeded methods in
-     * AnimationListeners.
-     */
-    private class BaseAnimationListener implements Animation.AnimationListener {
         @Override
         public void onAnimationStart(Animation animation) {
-        }
-
-        @Override
-        public void onAnimationEnd(Animation animation) {
         }
 
         @Override

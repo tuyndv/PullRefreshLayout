@@ -1,7 +1,7 @@
 <me.xiaopan.widget.PullRefreshLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:background="@drawable/bg">
+    android:padding="0dp">
 
     <ScrollView
         android:layout_width="match_parent"
@@ -13,4 +13,10 @@
             android:layout_height="wrap_content"
             android:padding="16dp"/>
     </ScrollView>
+
+    <me.xiaopan.pullrefreshlayout.sample.MyRefreshHeader
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content">
+
+    </me.xiaopan.pullrefreshlayout.sample.MyRefreshHeader>
 </me.xiaopan.widget.PullRefreshLayout>
