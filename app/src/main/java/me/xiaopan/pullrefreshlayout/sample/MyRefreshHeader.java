@@ -9,16 +9,15 @@ import android.widget.LinearLayout;
 import android.widget.ProgressBar;
 
 import me.xiaopan.pullrefreshlayout.R;
-import me.xiaopan.widget.RefreshHeader;
-import me.xiaopan.widget.RefreshLayout2HeaderBridge;
+import me.xiaopan.widget.PullRefreshLayout;
 
-public class MyRefreshHeader extends LinearLayout implements RefreshHeader {
+public class MyRefreshHeader extends LinearLayout implements PullRefreshLayout.RefreshHeader {
     private ImageView arrowImageView;
     private ProgressBar progressBar;
     private Matrix matrix;  // 用来旋转箭头
 
     private int maxDegrees; // 最大旋转角度
-    private int triggerDistance = -1;    // 触发距离
+    private int triggerHeight = -1;    // 触发高度
     private float px = -1, py = -1; // 旋转中心的坐标
 
     private Status status; // 状态
@@ -42,22 +41,18 @@ public class MyRefreshHeader extends LinearLayout implements RefreshHeader {
 
     @Override
     public void onTouchMove(int distance) {
-        if(status == Status.TRIGGERING){
+        if(status == Status.REFRESHING){
             return;
         }
 
-        // 初始化触发距离
-        if(triggerDistance == -1){
-            triggerDistance = getHeight() * 2;
-        }
-
         // 计算旋转角度
-        float degrees = maxDegrees;
-        if(distance >= triggerDistance){
-            status = Status.WAIT_TRIGGER;
+        float degrees;
+        if(distance >= getTriggerHeight()){
+            degrees = maxDegrees;
+            setStatus(Status.WAIT_REFRESH);
         }else{
-            degrees = ((float) distance/triggerDistance) * maxDegrees;
-            status = Status.NORMAL;
+            degrees = ((float) distance/ getTriggerHeight()) * maxDegrees;
+            setStatus(Status.NORMAL);
         }
 
         //当滚动的时候旋转箭头
@@ -66,19 +61,35 @@ public class MyRefreshHeader extends LinearLayout implements RefreshHeader {
     }
 
     @Override
-    public void onTouchUp(RefreshLayout2HeaderBridge refreshLayout2HeaderBridge) {
-        if(status == Status.WAIT_TRIGGER){
-            refreshLayout2HeaderBridge.setBaseLine(getHeight());
-            arrowImageView.setVisibility(INVISIBLE);
-            progressBar.setVisibility(VISIBLE);
-            status = Status.TRIGGERING;
-        }
+    public Status getStatus() {
+        return status;
     }
 
-    public enum Status {
-        NORMAL,
-        WAIT_TRIGGER,
-        TRIGGERING,
+    @Override
+    public void setStatus(Status status) {
+        this.status = status;
+    }
+
+    @Override
+    public void onToRefreshing() {
+        arrowImageView.setVisibility(INVISIBLE);
+        progressBar.setVisibility(VISIBLE);
+    }
+
+    @Override
+    public void onToNormal() {
+        arrowImageView.setVisibility(VISIBLE);
+        progressBar.setVisibility(INVISIBLE);
+    }
+
+    @Override
+    public int getTriggerHeight() {
+        // 初始化触发高度
+        if(triggerHeight == -1){
+            triggerHeight = getMeasuredHeight();
+        }
+
+        return triggerHeight;
     }
 
     private void adjustArrowViewSize(ImageView arrowImageView){

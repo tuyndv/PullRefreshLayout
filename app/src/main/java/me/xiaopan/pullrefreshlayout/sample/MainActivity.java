@@ -1,11 +1,13 @@
 package me.xiaopan.pullrefreshlayout.sample;
 
+import android.os.Handler;
 import android.support.v7.app.ActionBarActivity;
 import android.os.Bundle;
 import android.view.Menu;
 import android.view.MenuItem;
 
 import me.xiaopan.pullrefreshlayout.R;
+import me.xiaopan.widget.PullRefreshLayout;
 
 
 public class MainActivity extends ActionBarActivity {
@@ -14,6 +16,19 @@ public class MainActivity extends ActionBarActivity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
+
+        final PullRefreshLayout pullRefreshLayout = (PullRefreshLayout) findViewById(R.id.pullRefreshLayout);
+        pullRefreshLayout.setOnRefreshListener(new PullRefreshLayout.OnRefreshListener() {
+            @Override
+            public void onRefresh() {
+                new Handler().postDelayed(new Runnable() {
+                    @Override
+                    public void run() {
+                        pullRefreshLayout.stopRefresh();
+                    }
+                }, 2000);
+            }
+        });
     }
 
 

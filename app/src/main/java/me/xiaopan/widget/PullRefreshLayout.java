@@ -17,7 +17,7 @@ import android.widget.AbsListView;
 /**
  * 下拉刷新布局
  */
-public class PullRefreshLayout extends ViewGroup implements RefreshLayout2HeaderBridge {
+public class PullRefreshLayout extends ViewGroup{
     private static final String NAME = PullRefreshLayout.class.getSimpleName();
     private static final float DECELERATE_INTERPOLATION_FACTOR = 2f;
     private static final int INVALID_POINTER = -1;
@@ -35,6 +35,7 @@ public class PullRefreshLayout extends ViewGroup implements RefreshLayout2Header
     private boolean mReturningToStart;  // 标识是否正在返回到开始位置
     private boolean mIsBeingDragged;    // 标识是否开始拖拽
     private RollbackRunnable mRollbackRunnable; // 回滚器，用于回滚TargetView和HeaderView
+    private OnRefreshListener mOnRefreshListener;
 
     public PullRefreshLayout(Context context) {
         this(context, null);
@@ -225,10 +226,19 @@ public class PullRefreshLayout extends ViewGroup implements RefreshLayout2Header
             case MotionEvent.ACTION_CANCEL:
                 mIsBeingDragged = false;
                 mActivePointerId = INVALID_POINTER;
-                if(mRefreshHeader != null){
-                    mRefreshHeader.onTouchUp(this);
+
+                if(isRefreshing()){
+                    rollback(); // 如果正在刷新中就回滚
+                }else if(mRefreshHeader != null && mOnRefreshListener != null){
+                    if(mRefreshHeader.getStatus() == RefreshHeader.Status.WAIT_REFRESH){
+                        startRefresh(); // 如果是等待刷新就立马开启刷新
+                    }else{
+                        rollback(); // 否则就回滚
+                    }
+                }else{
+                    rollback(); // 否则就回滚
                 }
-                mRollbackRunnable.run();
+
                 return false;
         }
 
@@ -294,10 +304,66 @@ public class PullRefreshLayout extends ViewGroup implements RefreshLayout2Header
         invalidate();
     }
 
-    @Override
-    public void setBaseLine(int newBaseLine) {
-        mBaselineOriginalOffset = newBaseLine + getPaddingTop();
-        requestLayout();
+    /**
+     * @return Whether the SwipeRefreshWidget is actively showing refresh
+     *         progress.
+     */
+    public boolean isRefreshing() {
+        return mRefreshHeader != null && mRefreshHeader.getStatus() == RefreshHeader.Status.REFRESHING;
+    }
+
+    /**
+     * Set the listener to be notified when a refresh is triggered via the swipe
+     * gesture.
+     */
+    public void setOnRefreshListener(OnRefreshListener listener) {
+        mOnRefreshListener = listener;
+    }
+
+    /**
+     * 回滚
+     * @param newBaseLine 新的基准线
+     */
+    private void rollback(int newBaseLine){
+        if(newBaseLine != mBaselineOriginalOffset && newBaseLine > 0){
+            mBaselineOriginalOffset = newBaseLine;
+            requestLayout();
+        }
+        mRollbackRunnable.run();
+    }
+
+    /**
+     * 回滚
+     */
+    private void rollback(){
+        rollback(0);
+    }
+
+    /**
+     * 开始刷新
+     */
+    private void startRefresh() {
+        if(isRefreshing() || mRefreshHeader == null || mOnRefreshListener == null){
+           return;
+        }
+
+        mOnRefreshListener.onRefresh();
+        mRefreshHeader.setStatus(RefreshHeader.Status.REFRESHING);
+        mRefreshHeader.onToRefreshing();
+        rollback(getPaddingTop() + mRefreshHeader.getTriggerHeight());
+    }
+
+    /**
+     * 停止刷新
+     */
+    public void stopRefresh() {
+        if(!isRefreshing() || mRefreshHeader == null){
+            return;
+        }
+
+        mRefreshHeader.setStatus(RefreshHeader.Status.NORMAL);
+        mRefreshHeader.onToNormal();
+        rollback(getPaddingTop());
     }
 
     private class RollbackRunnable implements Runnable, Animation.AnimationListener {
@@ -354,6 +420,36 @@ public class PullRefreshLayout extends ViewGroup implements RefreshLayout2Header
 
         @Override
         public void onAnimationRepeat(Animation animation) {
+        }
+    }
+
+    public interface OnRefreshListener {
+        public void onRefresh();
+    }
+
+    public interface RefreshHeader{
+        public void onTouchMove(int distance);
+        public void onToRefreshing();
+        public void onToNormal();
+        public int getTriggerHeight();
+        public Status getStatus();
+        public void setStatus(Status status);
+
+        public enum Status {
+            /**
+             * 正常
+             */
+            NORMAL,
+
+            /**
+             * 等待刷新
+             */
+            WAIT_REFRESH,
+
+            /**
+             * 刷新中
+             */
+            REFRESHING,
         }
     }
 }
