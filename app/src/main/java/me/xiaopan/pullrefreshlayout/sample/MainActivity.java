@@ -132,7 +132,7 @@ public class MainActivity extends InjectActionBarActivity {
         }
 
         if(fragment != null){
-            getSupportFragmentManager().beginTransaction().setCustomAnimations(R.anim.base_slide_to_left_in, R.anim.base_slide_to_left_out).replace(R.id.content_frame, fragment).commit();
+            getSupportFragmentManager().beginTransaction().setCustomAnimations(R.anim.window_slide_to_left_in, R.anim.window_slide_to_left_out).replace(R.id.content_frame, fragment).commit();
             mDrawerList.setItemChecked(position, true);
             getSupportActionBar().setSubtitle(mPlanetTitles[position]);
         }
