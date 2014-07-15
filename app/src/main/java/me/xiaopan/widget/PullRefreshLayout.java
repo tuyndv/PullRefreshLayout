@@ -209,7 +209,7 @@ public class PullRefreshLayout extends ViewGroup{
                     mDownMotionY = y;
                     mIsBeingDragged = true;
                 }
-                updateBaselineOffset((int) (y - mLastMotionY), true);
+                updateBaselineOffset((int) (y - mLastMotionY), true, true);
                 mLastMotionY = y;
                 break;
             }
@@ -294,13 +294,20 @@ public class PullRefreshLayout extends ViewGroup{
     /**
      * 更新基准线位置偏移
      * @param offset 偏移量
+     * @param rollback 是否是在往回滚
      * @param callbackHeader 是否需要回调HeaderView
      */
-    private void updateBaselineOffset(int offset, boolean callbackHeader) {
+    private void updateBaselineOffset(int offset, boolean rollback, boolean callbackHeader) {
         // 检查偏移量防止滚动过头
         int result = mTargetView.getTop() + offset;
-        if(result < mBaselineOriginalOffset){
-            offset -= result;
+        if(rollback){
+            if(result < mBaselineOriginalOffset){
+                offset -= result;
+            }
+        }else{
+            if(result > mBaselineOriginalOffset){
+                offset = result - mBaselineOriginalOffset;
+            }
         }
 
         // 更新TargetView和HeaderView的位置
@@ -345,6 +352,8 @@ public class PullRefreshLayout extends ViewGroup{
                 requestLayout();
             }
         }
+        mRollbackRunnable.setFrom(mCurrentBaseline);
+        mRollbackRunnable.setTo(mBaselineOriginalOffset);
         mRollbackRunnable.run();
     }
 
@@ -390,11 +399,12 @@ public class PullRefreshLayout extends ViewGroup{
     }
 
     private class RollbackRunnable implements Runnable, Animation.AnimationListener {
-        private int mFrom;
-
         private int animationDuration;
         private DecelerateInterpolator mDecelerateInterpolator;
         private RollbackAnimation rollbackAnimation;
+
+        private int mFrom;
+        private int mTo;
 
         private RollbackRunnable(int animationDuration, DecelerateInterpolator mDecelerateInterpolator) {
             this.animationDuration = animationDuration;
@@ -402,10 +412,29 @@ public class PullRefreshLayout extends ViewGroup{
             this.mDecelerateInterpolator = mDecelerateInterpolator;
         }
 
+        public int getFrom() {
+            return mFrom;
+        }
+
+        public void setFrom(int from) {
+            this.mFrom = from;
+        }
+
+        public int getTo() {
+            return mTo;
+        }
+
+        public void setTo(int to) {
+            this.mTo = to;
+        }
+
         @Override
         public void run() {
+            if(getFrom() == getTo()){
+                return;
+            }
+
             mReturningToStart = true;
-            mFrom = mCurrentBaseline;
             rollbackAnimation.reset();
             rollbackAnimation.setDuration(animationDuration);
             rollbackAnimation.setAnimationListener(this);
@@ -416,16 +445,13 @@ public class PullRefreshLayout extends ViewGroup{
         private class RollbackAnimation extends Animation {
             @Override
             public void applyTransformation(float interpolatedTime, Transformation t) {
-                int targetTop = 0;
-                if (mFrom != mBaselineOriginalOffset) {
-                    targetTop = (mFrom + (int)((mBaselineOriginalOffset - mFrom) * interpolatedTime));
-                }
+                int targetTop = (getFrom() + (int)((getTo() - getFrom()) * interpolatedTime));
+                int currentTop = mTargetView.getTop();
                 int offset = targetTop - mTargetView.getTop();
-                final int currentTop = mTargetView.getTop();
                 if (offset + currentTop < 0) {
                     offset = 0 - currentTop;
                 }
-                updateBaselineOffset(offset, false);
+                updateBaselineOffset(offset, getFrom() > getTo(), false);
             }
         }
 
