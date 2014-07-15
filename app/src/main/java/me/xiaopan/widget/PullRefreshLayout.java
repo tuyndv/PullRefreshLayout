@@ -1,6 +1,7 @@
 package me.xiaopan.widget;
 
 import android.content.Context;
+import android.graphics.Canvas;
 import android.support.v4.view.MotionEventCompat;
 import android.support.v4.view.ViewCompat;
 import android.util.AttributeSet;
@@ -37,6 +38,9 @@ public class PullRefreshLayout extends ViewGroup{
     private boolean mIsBeingDragged;    // 标识是否开始拖拽
     private RollbackRunnable mRollbackRunnable; // 回滚器，用于回滚TargetView和HeaderView
     private OnRefreshListener mOnRefreshListener;
+
+    private boolean ready;
+    private boolean waitRefresh;
 
     public PullRefreshLayout(Context context) {
         this(context, null);
@@ -112,6 +116,26 @@ public class PullRefreshLayout extends ViewGroup{
         childView.layout(childLeft, childTop, childRight, childBottom);
         mRefreshHeaderView = childView;
         mRefreshHeader = (RefreshHeader) mRefreshHeaderView;
+
+        // 如果是第一次，并且有等待刷新的请求，就延迟启动刷新
+        if(!ready){
+            ready = true;
+            if(waitRefresh){
+                delayedStartRefresh();
+            }
+        }
+    }
+
+    /**
+     * 延迟启动刷新
+     */
+    private void delayedStartRefresh(){
+        postDelayed(new Runnable() {
+            @Override
+            public void run() {
+                startRefresh();
+            }
+        }, getResources().getInteger(android.R.integer.config_mediumAnimTime));
     }
 
     @Override
@@ -360,7 +384,6 @@ public class PullRefreshLayout extends ViewGroup{
 
     /**
      * 设置动画插值器
-     * @param decelerateInterpolator
      */
     public void setAnimationDecelerateInterpolator(DecelerateInterpolator decelerateInterpolator) {
         mRollbackRunnable.setDecelerateInterpolator(decelerateInterpolator);
@@ -393,6 +416,11 @@ public class PullRefreshLayout extends ViewGroup{
      * @return true：成功；false：失败，因为当前正在刷新中或者没有刷新头或没有设置刷新监听器
      */
     public boolean startRefresh() {
+        if(!ready){
+            waitRefresh = true;
+            return true;
+        }
+
         if(isRefreshing() || mRefreshHeader == null || mOnRefreshListener == null){
            return false;
         }

@@ -38,16 +38,7 @@ public abstract class PullRefreshFragment extends InjectFragment{
             }
         });
 
-        new Handler().postDelayed(new Runnable() {
-            @Override
-            public void run() {
-                pullRefreshLayout.startRefresh();
-                if(Build.VERSION.SDK_INT >= Build.VERSION_CODES.HONEYCOMB){
-                    setHasOptionsMenu(false);
-                    setHasOptionsMenu(true);
-                }
-            }
-        }, 400);
+        pullRefreshLayout.startRefresh();
     }
 
     protected abstract void onRefreshContent();
