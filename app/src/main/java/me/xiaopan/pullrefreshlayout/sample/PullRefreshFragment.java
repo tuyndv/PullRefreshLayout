@@ -1,6 +1,8 @@
 package me.xiaopan.pullrefreshlayout.sample;
 
 
+import android.content.Intent;
+import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
 import android.os.Handler;
@@ -72,6 +74,10 @@ public abstract class PullRefreshFragment extends InjectFragment{
                 setHasOptionsMenu(true);
             }
             return true;
+        }else if(item.getItemId() == R.id.action_github){
+            Intent intent = new Intent(Intent.ACTION_VIEW, Uri.parse("https://github.com/xiaopansky/PullRefreshLayout"));
+            intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+            startActivity(intent);
         }
         return super.onOptionsItemSelected(item);
     }
