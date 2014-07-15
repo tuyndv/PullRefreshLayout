@@ -3,6 +3,7 @@ package me.xiaopan.pullrefreshlayout.sample;
 import android.content.Context;
 import android.graphics.Matrix;
 import android.util.AttributeSet;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
@@ -19,6 +20,7 @@ public class MyRefreshHeader extends LinearLayout implements PullRefreshLayout.R
     private int maxDegrees; // 最大旋转角度
     private int triggerHeight = -1;    // 触发高度
     private float px = -1, py = -1; // 旋转中心的坐标
+    private Integer originTop;
 
     private Status status; // 状态
 
@@ -40,12 +42,16 @@ public class MyRefreshHeader extends LinearLayout implements PullRefreshLayout.R
     }
 
     @Override
-    public void onTouchMove(int distance) {
+    public void onScroll(int distance) {
         if(status == Status.REFRESHING){
             return;
         }
 
-        // 计算旋转角度
+        if(originTop == null){
+            originTop = getTop();
+        }
+
+        // 判断是否达到刷新的条件并计算旋转角度
         float degrees;
         if(distance >= getTriggerHeight()){
             degrees = maxDegrees;
