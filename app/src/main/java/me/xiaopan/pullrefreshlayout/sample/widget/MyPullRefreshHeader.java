@@ -3,7 +3,6 @@ package me.xiaopan.pullrefreshlayout.sample.widget;
 import android.content.Context;
 import android.graphics.Matrix;
 import android.util.AttributeSet;
-import android.util.Log;
 import android.view.LayoutInflater;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
@@ -13,45 +12,44 @@ import android.widget.TextView;
 import me.xiaopan.pullrefreshlayout.R;
 import me.xiaopan.widget.PullRefreshLayout;
 
-public class MyRefreshHeader extends LinearLayout implements PullRefreshLayout.RefreshHeader {
+public class MyPullRefreshHeader extends LinearLayout implements PullRefreshLayout.PullRefreshHeader {
     private ImageView arrowImageView;
     private ProgressBar progressBar;
     private TextView hintTextView;
-    private Matrix matrix;  // 用来旋转箭头
 
+    private Matrix matrix;  // 用来旋转箭头
     private int maxDegrees; // 最大旋转角度
     private int triggerHeight = -1;    // 触发高度
     private float px = -1, py = -1; // 旋转中心的坐标
-    private Integer originTop;
-
     private Status status; // 状态
 
-    public MyRefreshHeader(Context context) {
+    public MyPullRefreshHeader(Context context) {
         this(context, null);
     }
 
-    public MyRefreshHeader(Context context, AttributeSet attrs) {
+    public MyPullRefreshHeader(Context context, AttributeSet attrs) {
         super(context, attrs);
         LayoutInflater.from(getContext()).inflate(R.layout.refresh_header, this);
         arrowImageView = (ImageView) findViewWithTag("arrowImage");
         progressBar = (ProgressBar) findViewWithTag("progressBar");
         hintTextView = (TextView) findViewWithTag("hintText");
 
-        adjustArrowViewSize(arrowImageView);
+        adjustArrowImageViewPadding(arrowImageView);
+        px = arrowImageView.getDrawable().getIntrinsicWidth() /2;
+        py = arrowImageView.getDrawable().getIntrinsicHeight() /2;
         arrowImageView.setScaleType(ImageView.ScaleType.MATRIX);
         matrix = new Matrix();
         maxDegrees = 180;
         status = Status.NORMAL;
+
+        onToNormal();
     }
 
     @Override
     public void onScroll(int distance) {
+        // 如果当前正在刷新，就什么也不做
         if(status == Status.REFRESHING){
             return;
-        }
-
-        if(originTop == null){
-            originTop = getTop();
         }
 
         // 判断是否达到刷新的条件并计算旋转角度
@@ -59,8 +57,6 @@ public class MyRefreshHeader extends LinearLayout implements PullRefreshLayout.R
         if(distance >= getTriggerHeight()){
             degrees = maxDegrees;
             setStatus(Status.WAIT_REFRESH);
-            hintTextView.setFocusable(false);
-            hintTextView.setFocusableInTouchMode(false);
             hintTextView.setText("松手立即刷新");
         }else{
             degrees = ((float) distance/ getTriggerHeight()) * maxDegrees;
@@ -68,7 +64,7 @@ public class MyRefreshHeader extends LinearLayout implements PullRefreshLayout.R
             hintTextView.setText("下拉刷新");
         }
 
-        //当滚动的时候旋转箭头
+        //旋转箭头
         matrix.setRotate(degrees, px, py);
         arrowImageView.setImageMatrix(matrix);
     }
@@ -103,11 +99,13 @@ public class MyRefreshHeader extends LinearLayout implements PullRefreshLayout.R
         if(triggerHeight == -1){
             triggerHeight = getMeasuredHeight();
         }
-
         return triggerHeight;
     }
 
-    private void adjustArrowViewSize(ImageView arrowImageView){
+    /**
+     * 调整箭头图片的内边距，保证在旋转箭头的时候不会被遮盖
+     */
+    private void adjustArrowImageViewPadding(ImageView arrowImageView){
         if(arrowImageView.getDrawable() == null){
             return;
         }
@@ -136,8 +134,5 @@ public class MyRefreshHeader extends LinearLayout implements PullRefreshLayout.R
             }
         }
         arrowImageView.setPadding(paddingLeft, paddingTop, paddingRight, paddingBottom);
-
-        px = width /2;
-        py = height /2;
     }
 }

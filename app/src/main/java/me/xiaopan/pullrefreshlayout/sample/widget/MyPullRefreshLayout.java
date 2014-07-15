@@ -17,7 +17,7 @@ public class MyPullRefreshLayout extends PullRefreshLayout{
     @Override
     public void onMeasure(int widthMeasureSpec, int heightMeasureSpec) {
         if(getChildCount() < 2){
-            addView(new MyRefreshHeader(getContext()));
+            addView(new MyPullRefreshHeader(getContext()));
         }
         super.onMeasure(widthMeasureSpec, heightMeasureSpec);
     }

@@ -1,7 +1,6 @@
 package me.xiaopan.widget;
 
 import android.content.Context;
-import android.graphics.Canvas;
 import android.support.v4.view.MotionEventCompat;
 import android.support.v4.view.ViewCompat;
 import android.util.AttributeSet;
@@ -26,7 +25,7 @@ public class PullRefreshLayout extends ViewGroup{
 
     private View mTargetView;
     private View mRefreshHeaderView;
-    private RefreshHeader mRefreshHeader;
+    private PullRefreshHeader mPullRefreshHeader;
     private int mBaselineOriginalOffset = -1;    // 基准线原始位置
     private int mCurrentBaseline;
     private int mTouchSlop; // 触摸抖动范围，意思是说，移动距离超过此值才会被认为是一次移动操作，否则就是点击操作
@@ -78,8 +77,8 @@ public class PullRefreshLayout extends ViewGroup{
         }
 
         // 确保HeaderView实现了RefreshHeader接口
-        if(!(getChildAt(1) instanceof RefreshHeader)){
-            throw new IllegalStateException(NAME+" the second view must implement "+RefreshHeader.class.getSimpleName()+" interface");
+        if(!(getChildAt(1) instanceof PullRefreshHeader)){
+            throw new IllegalStateException(NAME+" the second view must implement "+PullRefreshHeader.class.getSimpleName()+" interface");
         }
 
         // 测量第二个子视图，由于第二个被认定为刷新头，所以其高度只能是UNSPECIFIED
@@ -115,7 +114,7 @@ public class PullRefreshLayout extends ViewGroup{
         childBottom = childTop + childView.getMeasuredHeight();
         childView.layout(childLeft, childTop, childRight, childBottom);
         mRefreshHeaderView = childView;
-        mRefreshHeader = (RefreshHeader) mRefreshHeaderView;
+        mPullRefreshHeader = (PullRefreshHeader) mRefreshHeaderView;
 
         // 如果是第一次，并且有等待刷新的请求，就延迟启动刷新
         if(!ready){
@@ -151,7 +150,7 @@ public class PullRefreshLayout extends ViewGroup{
             mReturningToStart = false;
         }
 
-        if (!isEnabled() || mReturningToStart || canChildScrollUp()) {
+        if (!isEnabled() || mTargetView == null || mRefreshHeaderView == null || mPullRefreshHeader == null || mReturningToStart || canChildScrollUp()) {
             // Fail fast if we're not in a state where a swipe is possible
             return false;
         }
@@ -206,7 +205,7 @@ public class PullRefreshLayout extends ViewGroup{
             mReturningToStart = false;
         }
 
-        if (!isEnabled() || mReturningToStart || canChildScrollUp()) {
+        if (!isEnabled() || mTargetView == null || mRefreshHeaderView == null || mPullRefreshHeader == null || mReturningToStart || canChildScrollUp()) {
             // Fail fast if we're not in a state where a swipe is possible
             return false;
         }
@@ -256,8 +255,8 @@ public class PullRefreshLayout extends ViewGroup{
 
                 if(isRefreshing()){
                     rollback(false); // 如果正在刷新中就回滚
-                }else if(mRefreshHeader != null && mOnRefreshListener != null){
-                    if(mRefreshHeader.getStatus() == RefreshHeader.Status.WAIT_REFRESH){
+                }else if(mPullRefreshHeader != null && mOnRefreshListener != null){
+                    if(mPullRefreshHeader.getStatus() == PullRefreshHeader.Status.WAIT_REFRESH){
                         startRefresh(); // 如果是等待刷新就立马开启刷新
                     }else{
                         rollback(false); // 否则就回滚
@@ -344,7 +343,7 @@ public class PullRefreshLayout extends ViewGroup{
 
         // 回调HeaderView
         if(callbackHeader){
-            mRefreshHeader.onScroll(Math.abs(mCurrentBaseline - getPaddingTop()));
+            mPullRefreshHeader.onScroll(Math.abs(mCurrentBaseline - getPaddingTop()));
         }
 
         invalidate();
@@ -408,7 +407,7 @@ public class PullRefreshLayout extends ViewGroup{
      * 是否正在刷新
      */
     public boolean isRefreshing() {
-        return mRefreshHeader != null && mRefreshHeader.getStatus() == RefreshHeader.Status.REFRESHING;
+        return mPullRefreshHeader != null && mPullRefreshHeader.getStatus() == PullRefreshHeader.Status.REFRESHING;
     }
 
     /**
@@ -421,14 +420,14 @@ public class PullRefreshLayout extends ViewGroup{
             return true;
         }
 
-        if(isRefreshing() || mRefreshHeader == null || mOnRefreshListener == null){
+        if(isRefreshing() || mPullRefreshHeader == null || mOnRefreshListener == null){
            return false;
         }
 
         mOnRefreshListener.onRefresh();
-        mRefreshHeader.setStatus(RefreshHeader.Status.REFRESHING);
-        mRefreshHeader.onToRefreshing();
-        rollback(getPaddingTop() + mRefreshHeader.getTriggerHeight(), false);
+        mPullRefreshHeader.setStatus(PullRefreshHeader.Status.REFRESHING);
+        mPullRefreshHeader.onToRefreshing();
+        rollback(getPaddingTop() + mPullRefreshHeader.getTriggerHeight(), false);
 
         return true;
     }
@@ -438,12 +437,12 @@ public class PullRefreshLayout extends ViewGroup{
      * @return true：成功；false：失败，因为当前正在刷新中或者没有刷新头
      */
     public boolean stopRefresh() {
-        if(!isRefreshing() || mRefreshHeader == null){
+        if(!isRefreshing() || mPullRefreshHeader == null){
             return false;
         }
 
-        mRefreshHeader.setStatus(RefreshHeader.Status.NORMAL);
-        mRefreshHeader.onToNormal();
+        mPullRefreshHeader.setStatus(PullRefreshHeader.Status.NORMAL);
+        mPullRefreshHeader.onToNormal();
         rollback(getPaddingTop(), true);
 
         return true;
@@ -532,7 +531,7 @@ public class PullRefreshLayout extends ViewGroup{
         public void onRefresh();
     }
 
-    public interface RefreshHeader{
+    public interface PullRefreshHeader {
         public void onScroll(int distance);
         public void onToRefreshing();
         public void onToNormal();
