@@ -5,11 +5,11 @@ android {
     buildToolsVersion "20.0.0"
 
     defaultConfig {
-        applicationId "me.xiaopan.pullrefreshlayout"
+        applicationId "me.xiaopan.android.pullrefreshlayout"
         minSdkVersion 9
         targetSdkVersion 20
-        versionCode 1
-        versionName "1.0"
+        versionCode 100
+        versionName "1.0.0"
     }
     buildTypes {
         release {

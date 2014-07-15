@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2013 Peng fei Pan <sky@xiaopan.me>
+ * Copyright (C) 2014 Peng fei Pan <sky@xiaopan.me>
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package me.xiaopan.pullrefreshlayout.sample.fragment;
+package me.xiaopan.android.pullrefreshlayout.fragment;
 
 import android.annotation.TargetApi;
 import android.content.Context;
@@ -38,13 +38,12 @@ import me.xiaopan.android.imageloader.task.display.DisplayOptions;
 import me.xiaopan.android.inject.InjectContentView;
 import me.xiaopan.android.inject.InjectParentMember;
 import me.xiaopan.android.inject.InjectView;
-import me.xiaopan.pullrefreshlayout.R;
-import me.xiaopan.pullrefreshlayout.sample.PullRefreshFragment;
+import me.xiaopan.android.pullrefreshlayout.PullRefreshFragment;
 
 @InjectParentMember
-@InjectContentView(R.layout.fragment_grid_view)
+@InjectContentView(me.xiaopan.android.pullrefreshlayout.R.layout.fragment_grid_view)
 public class GridViewFragment extends PullRefreshFragment {
-    @InjectView(R.id.gridView) private GridView gridView;
+    @InjectView(me.xiaopan.android.pullrefreshlayout.R.id.gridView) private GridView gridView;
 
     private int index;
 
@@ -223,9 +222,9 @@ public class GridViewFragment extends PullRefreshFragment {
             }
 
             displayOptions = new DisplayOptions(context)
-                    .setLoadingDrawable(R.drawable.image_loading)
-                    .setLoadFailDrawable(R.drawable.image_load_fail)
-                    .setEmptyUriDrawable(R.drawable.image_loading)
+                    .setLoadingDrawable(me.xiaopan.android.pullrefreshlayout.R.drawable.image_loading)
+                    .setLoadFailDrawable(me.xiaopan.android.pullrefreshlayout.R.drawable.image_load_fail)
+                    .setEmptyUriDrawable(me.xiaopan.android.pullrefreshlayout.R.drawable.image_loading)
                     .setDisplayer(new OriginalFadeInBitmapDisplayer())
                     .setProcessor(new TailorBitmapProcessor());
         }
@@ -250,8 +249,8 @@ public class GridViewFragment extends PullRefreshFragment {
             final ViewHolder viewHolder;
             if(convertView == null){
                 viewHolder = new ViewHolder();
-                convertView = LayoutInflater.from(context).inflate(R.layout.grid_item_image, null);
-                viewHolder.image = (ImageView) convertView.findViewById(R.id.image_gridItem);
+                convertView = LayoutInflater.from(context).inflate(me.xiaopan.android.pullrefreshlayout.R.layout.grid_item_image, null);
+                viewHolder.image = (ImageView) convertView.findViewById(me.xiaopan.android.pullrefreshlayout.R.id.image_gridItem);
                 if(cloumns > 1){
                     viewHolder.image.setLayoutParams(new FrameLayout.LayoutParams(screenWidth/ cloumns, screenWidth/ cloumns));
                 }

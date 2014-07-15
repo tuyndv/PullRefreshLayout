@@ -1,4 +1,20 @@
-package me.xiaopan.pullrefreshlayout.sample.widget;
+/*
+ * Copyright (C) 2014 Peng fei Pan <sky@xiaopan.me>
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *   http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+package me.xiaopan.android.pullrefreshlayout.widget;
 
 import android.content.Context;
 import android.graphics.Matrix;
@@ -9,8 +25,8 @@ import android.widget.LinearLayout;
 import android.widget.ProgressBar;
 import android.widget.TextView;
 
-import me.xiaopan.pullrefreshlayout.R;
-import me.xiaopan.widget.PullRefreshLayout;
+import me.xiaopan.android.pullrefreshlayout.R;
+import me.xiaopan.android.widget.PullRefreshLayout;
 
 public class MyPullRefreshHeader extends LinearLayout implements PullRefreshLayout.PullRefreshHeader {
     private ImageView arrowImageView;
@@ -52,19 +68,13 @@ public class MyPullRefreshHeader extends LinearLayout implements PullRefreshLayo
             return;
         }
 
-        // 判断是否达到刷新的条件并计算旋转角度
+        // 计算旋转角度并旋转箭头
         float degrees;
         if(distance >= getTriggerHeight()){
             degrees = maxDegrees;
-            setStatus(Status.WAIT_REFRESH);
-            hintTextView.setText("松手立即刷新");
         }else{
             degrees = ((float) distance/ getTriggerHeight()) * maxDegrees;
-            setStatus(Status.NORMAL);
-            hintTextView.setText("下拉刷新");
         }
-
-        //旋转箭头
         matrix.setRotate(degrees, px, py);
         arrowImageView.setImageMatrix(matrix);
     }
@@ -77,6 +87,13 @@ public class MyPullRefreshHeader extends LinearLayout implements PullRefreshLayo
     @Override
     public void setStatus(Status status) {
         this.status = status;
+    }
+
+    @Override
+    public void onToWaitRefresh() {
+        arrowImageView.setVisibility(VISIBLE);
+        progressBar.setVisibility(INVISIBLE);
+        hintTextView.setText("松手立即刷新");
     }
 
     @Override

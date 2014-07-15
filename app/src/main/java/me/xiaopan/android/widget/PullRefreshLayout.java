@@ -1,4 +1,20 @@
-package me.xiaopan.widget;
+/*
+ * Copyright (C) 2014 Peng fei Pan <sky@xiaopan.me>
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *   http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+package me.xiaopan.android.widget;
 
 import android.content.Context;
 import android.support.v4.view.MotionEventCompat;
@@ -11,11 +27,14 @@ import android.view.ViewConfiguration;
 import android.view.ViewGroup;
 import android.view.animation.Animation;
 import android.view.animation.DecelerateInterpolator;
+import android.view.animation.Interpolator;
 import android.view.animation.Transformation;
 import android.widget.AbsListView;
 
 /**
  * 下拉刷新布局
+ * @author xiaopan
+ * @version 1.0.0 Home https://github.com/xiaopansky/PullRefreshLayout
  */
 public class PullRefreshLayout extends ViewGroup{
     private static final String NAME = PullRefreshLayout.class.getSimpleName();
@@ -25,6 +44,7 @@ public class PullRefreshLayout extends ViewGroup{
 
     private View mTargetView;
     private View mRefreshHeaderView;
+    private Class<? extends PullRefreshHeader> pullRefreshHeaderClass;
     private PullRefreshHeader mPullRefreshHeader;
     private int mBaselineOriginalOffset = -1;    // 基准线原始位置
     private int mCurrentBaseline;
@@ -73,7 +93,16 @@ public class PullRefreshLayout extends ViewGroup{
         getChildAt(0).measure(MeasureSpec.makeMeasureSpec(width, MeasureSpec.EXACTLY), MeasureSpec.makeMeasureSpec(height, MeasureSpec.EXACTLY));
 
         if (getChildCount() < 2){
-            return;
+            if(pullRefreshHeaderClass != null){
+                try {
+                    addView((View) pullRefreshHeaderClass.getConstructor(Context.class).newInstance(getContext()));
+                } catch (Exception e) {
+                    e.printStackTrace();
+                    return;
+                }
+            }else{
+                return;
+            }
         }
 
         // 确保HeaderView实现了RefreshHeader接口
@@ -343,7 +372,15 @@ public class PullRefreshLayout extends ViewGroup{
 
         // 回调HeaderView
         if(callbackHeader){
-            mPullRefreshHeader.onScroll(Math.abs(mCurrentBaseline - getPaddingTop()));
+            int distance = Math.abs(mCurrentBaseline - getPaddingTop());
+            if(distance >= mPullRefreshHeader.getTriggerHeight()){
+                mPullRefreshHeader.setStatus(PullRefreshHeader.Status.WAIT_REFRESH);
+                mPullRefreshHeader.onToWaitRefresh();
+            }else{
+                mPullRefreshHeader.setStatus(PullRefreshHeader.Status.NORMAL);
+                mPullRefreshHeader.onToNormal();
+            }
+            mPullRefreshHeader.onScroll(distance);
         }
 
         invalidate();
@@ -375,6 +412,13 @@ public class PullRefreshLayout extends ViewGroup{
     }
 
     /**
+     * 设置下拉刷新头的Class，稍后会用此Class实例化一个下拉刷新头
+     */
+    public void setPullRefreshHeaderClass(Class<? extends PullRefreshHeader> pullRefreshHeaderClass) {
+        this.pullRefreshHeaderClass = pullRefreshHeaderClass;
+    }
+
+    /**
      * 设置动画持续时间
      */
     public void setAnimationDuration(int animationDuration) {
@@ -384,8 +428,8 @@ public class PullRefreshLayout extends ViewGroup{
     /**
      * 设置动画插值器
      */
-    public void setAnimationDecelerateInterpolator(DecelerateInterpolator decelerateInterpolator) {
-        mRollbackRunnable.setDecelerateInterpolator(decelerateInterpolator);
+    public void setAnimationInterpolator(Interpolator interpolator) {
+        mRollbackRunnable.setInterpolator(interpolator);
     }
 
     /**
@@ -397,7 +441,7 @@ public class PullRefreshLayout extends ViewGroup{
 
     /**
      * 设置拉力强度
-     * @param elasticForce 拉力强度，用来实现橡皮筋效果，此值越小垃圾越大，用户越难拉，默认是0.5f
+     * @param elasticForce 拉力强度，取值范围是[0.0f-1.0f]用来实现橡皮筋效果，此值越小垃圾越大，用户越难拉，默认是0.5f
      */
     public void setElasticForce(float elasticForce) {
         this.elasticForce = elasticForce;
@@ -450,16 +494,16 @@ public class PullRefreshLayout extends ViewGroup{
 
     private class RollbackRunnable implements Runnable, Animation.AnimationListener {
         private int animationDuration;
-        private DecelerateInterpolator mDecelerateInterpolator;
+        private Interpolator mInterpolator;
         private RollbackAnimation rollbackAnimation;
 
         private int mFrom;
         private int mTo;
 
-        private RollbackRunnable(int animationDuration, DecelerateInterpolator mDecelerateInterpolator) {
+        private RollbackRunnable(int animationDuration, Interpolator mInterpolator) {
             this.animationDuration = animationDuration;
             this.rollbackAnimation = new RollbackAnimation();
-            this.mDecelerateInterpolator = mDecelerateInterpolator;
+            this.mInterpolator = mInterpolator;
         }
 
         public int getFrom() {
@@ -482,8 +526,8 @@ public class PullRefreshLayout extends ViewGroup{
             this.animationDuration = animationDuration;
         }
 
-        public void setDecelerateInterpolator(DecelerateInterpolator mDecelerateInterpolator) {
-            this.mDecelerateInterpolator = mDecelerateInterpolator;
+        public void setInterpolator(Interpolator interpolator) {
+            this.mInterpolator = interpolator;
         }
 
         @Override
@@ -496,7 +540,7 @@ public class PullRefreshLayout extends ViewGroup{
             rollbackAnimation.reset();
             rollbackAnimation.setDuration(animationDuration);
             rollbackAnimation.setAnimationListener(this);
-            rollbackAnimation.setInterpolator(mDecelerateInterpolator);
+            rollbackAnimation.setInterpolator(mInterpolator);
             mTargetView.startAnimation(rollbackAnimation);
         }
 
@@ -535,6 +579,7 @@ public class PullRefreshLayout extends ViewGroup{
         public void onScroll(int distance);
         public void onToRefreshing();
         public void onToNormal();
+        public void onToWaitRefresh();
         public int getTriggerHeight();
         public Status getStatus();
         public void setStatus(Status status);

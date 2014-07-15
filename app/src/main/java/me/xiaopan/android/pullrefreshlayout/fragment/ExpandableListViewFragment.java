@@ -1,4 +1,20 @@
-package me.xiaopan.pullrefreshlayout.sample.fragment;
+/*
+ * Copyright (C) 2014 Peng fei Pan <sky@xiaopan.me>
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *   http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+package me.xiaopan.android.pullrefreshlayout.fragment;
 
 import android.content.Context;
 import android.os.AsyncTask;
@@ -19,11 +35,10 @@ import java.util.Locale;
 import me.xiaopan.android.inject.InjectContentView;
 import me.xiaopan.android.inject.InjectParentMember;
 import me.xiaopan.android.inject.InjectView;
-import me.xiaopan.pullrefreshlayout.R;
-import me.xiaopan.pullrefreshlayout.sample.PullRefreshFragment;
+import me.xiaopan.android.pullrefreshlayout.PullRefreshFragment;
 
 @InjectParentMember
-@InjectContentView(R.layout.fragment_expandable_list_view)
+@InjectContentView(me.xiaopan.android.pullrefreshlayout.R.layout.fragment_expandable_list_view)
 public class ExpandableListViewFragment extends PullRefreshFragment {
     @InjectView(android.R.id.list) private ExpandableListView listView;
 
@@ -117,8 +132,8 @@ public class ExpandableListViewFragment extends PullRefreshFragment {
             GroupViewHolder viewHolder;
             if(convertView == null){
                 viewHolder = new GroupViewHolder();
-                convertView = LayoutInflater.from(context).inflate(R.layout.list_item_text, parent, false);
-                viewHolder.text = (TextView) convertView.findViewById(R.id.text_textItem_text);
+                convertView = LayoutInflater.from(context).inflate(me.xiaopan.android.pullrefreshlayout.R.layout.list_item_text, parent, false);
+                viewHolder.text = (TextView) convertView.findViewById(me.xiaopan.android.pullrefreshlayout.R.id.text_textItem_text);
                 convertView.setTag(viewHolder);
             }else{
                 viewHolder = (GroupViewHolder) convertView.getTag();
@@ -133,8 +148,8 @@ public class ExpandableListViewFragment extends PullRefreshFragment {
             ChildViewHolder viewHolder;
             if(convertView == null){
                 viewHolder = new ChildViewHolder();
-                convertView = LayoutInflater.from(context).inflate(R.layout.list_item_text, parent, false);
-                viewHolder.text = (TextView) convertView.findViewById(R.id.text_textItem_text);
+                convertView = LayoutInflater.from(context).inflate(me.xiaopan.android.pullrefreshlayout.R.layout.list_item_text, parent, false);
+                viewHolder.text = (TextView) convertView.findViewById(me.xiaopan.android.pullrefreshlayout.R.id.text_textItem_text);
                 convertView.setTag(viewHolder);
             }else{
                 viewHolder = (ChildViewHolder) convertView.getTag();

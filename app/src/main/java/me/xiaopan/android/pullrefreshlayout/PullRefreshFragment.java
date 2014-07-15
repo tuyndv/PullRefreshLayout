@@ -1,11 +1,25 @@
-package me.xiaopan.pullrefreshlayout.sample;
+/*
+ * Copyright (C) 2014 Peng fei Pan <sky@xiaopan.me>
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *   http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 
+package me.xiaopan.android.pullrefreshlayout;
 
 import android.content.Intent;
 import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
-import android.os.Handler;
 import android.view.Menu;
 import android.view.MenuInflater;
 import android.view.MenuItem;
@@ -13,8 +27,8 @@ import android.view.View;
 
 import me.xiaopan.android.inject.InjectView;
 import me.xiaopan.android.inject.app.InjectFragment;
-import me.xiaopan.pullrefreshlayout.R;
-import me.xiaopan.widget.PullRefreshLayout;
+import me.xiaopan.android.pullrefreshlayout.widget.MyPullRefreshHeader;
+import me.xiaopan.android.widget.PullRefreshLayout;
 
 public abstract class PullRefreshFragment extends InjectFragment{
     @InjectView(R.id.pullRefreshLayout) protected PullRefreshLayout pullRefreshLayout;
@@ -29,6 +43,7 @@ public abstract class PullRefreshFragment extends InjectFragment{
     public void onViewCreated(View view, Bundle savedInstanceState) {
         super.onViewCreated(view, savedInstanceState);
 
+        pullRefreshLayout.setPullRefreshHeaderClass(MyPullRefreshHeader.class);
         pullRefreshLayout.setOnRefreshListener(new PullRefreshLayout.OnRefreshListener() {
             @Override
             public void onRefresh() {
