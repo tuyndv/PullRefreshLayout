@@ -23,6 +23,10 @@ public class ScrollViewFragment extends PullRefreshFragment {
         new Handler().postDelayed(new Runnable() {
             @Override
             public void run() {
+                if(getActivity() == null){
+                    return;
+                }
+
                 contentTextView.setText(contents[index++%contents.length]);
                 pullRefreshLayout.stopRefresh();
                 if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.HONEYCOMB) {

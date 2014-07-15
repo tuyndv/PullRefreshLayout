@@ -103,6 +103,10 @@ public class ListViewFragment extends PullRefreshFragment {
 
             @Override
             protected void onPostExecute(String[] strings) {
+                if(getActivity() == null){
+                    return;
+                }
+
                 listView.setAdapter(new ArrayAdapter<String>(getActivity(), android.R.layout.simple_list_item_1, strings));
                 pullRefreshLayout.stopRefresh();
                 if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.HONEYCOMB) {

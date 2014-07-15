@@ -53,6 +53,10 @@ public class GridViewFragment extends PullRefreshFragment {
         new Handler().postDelayed(new Runnable() {
             @Override
             public void run() {
+                if(getActivity() == null){
+                    return;
+                }
+
                 gridView.setAdapter(new GridImageAdapter(getActivity(), urls[index++%urls.length], 3));
                 pullRefreshLayout.stopRefresh();
                 if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.HONEYCOMB) {

@@ -17,6 +17,10 @@ public class ImageViewFragment extends PullRefreshFragment {
         new Handler().postDelayed(new Runnable() {
             @Override
             public void run() {
+                if(getActivity() == null){
+                    return;
+                }
+
                 pullRefreshLayout.stopRefresh();
                 if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.HONEYCOMB) {
                     setHasOptionsMenu(false);

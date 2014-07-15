@@ -54,6 +54,10 @@ public class ExpandableListViewFragment extends PullRefreshFragment {
 
             @Override
             protected void onPostExecute(List<Group> groups) {
+                if(getActivity() == null){
+                    return;
+                }
+
                 listView.setAdapter(new GroupAdapter(getActivity(), groups));
                 pullRefreshLayout.stopRefresh();
                 if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.HONEYCOMB) {
