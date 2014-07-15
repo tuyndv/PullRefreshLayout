@@ -8,6 +8,7 @@ import android.view.LayoutInflater;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.ProgressBar;
+import android.widget.TextView;
 
 import me.xiaopan.pullrefreshlayout.R;
 import me.xiaopan.widget.PullRefreshLayout;
@@ -15,6 +16,7 @@ import me.xiaopan.widget.PullRefreshLayout;
 public class MyRefreshHeader extends LinearLayout implements PullRefreshLayout.RefreshHeader {
     private ImageView arrowImageView;
     private ProgressBar progressBar;
+    private TextView hintTextView;
     private Matrix matrix;  // 用来旋转箭头
 
     private int maxDegrees; // 最大旋转角度
@@ -31,8 +33,9 @@ public class MyRefreshHeader extends LinearLayout implements PullRefreshLayout.R
     public MyRefreshHeader(Context context, AttributeSet attrs) {
         super(context, attrs);
         LayoutInflater.from(getContext()).inflate(R.layout.refresh_header, this);
-        arrowImageView = (ImageView) findViewWithTag("arrow");
-        progressBar = (ProgressBar) findViewWithTag("progress");
+        arrowImageView = (ImageView) findViewWithTag("arrowImage");
+        progressBar = (ProgressBar) findViewWithTag("progressBar");
+        hintTextView = (TextView) findViewWithTag("hintText");
 
         adjustArrowViewSize(arrowImageView);
         arrowImageView.setScaleType(ImageView.ScaleType.MATRIX);
@@ -56,9 +59,13 @@ public class MyRefreshHeader extends LinearLayout implements PullRefreshLayout.R
         if(distance >= getTriggerHeight()){
             degrees = maxDegrees;
             setStatus(Status.WAIT_REFRESH);
+            hintTextView.setFocusable(false);
+            hintTextView.setFocusableInTouchMode(false);
+            hintTextView.setText("松手立即刷新");
         }else{
             degrees = ((float) distance/ getTriggerHeight()) * maxDegrees;
             setStatus(Status.NORMAL);
+            hintTextView.setText("下拉刷新");
         }
 
         //当滚动的时候旋转箭头
@@ -80,12 +87,14 @@ public class MyRefreshHeader extends LinearLayout implements PullRefreshLayout.R
     public void onToRefreshing() {
         arrowImageView.setVisibility(INVISIBLE);
         progressBar.setVisibility(VISIBLE);
+        hintTextView.setText("正在刷新...");
     }
 
     @Override
     public void onToNormal() {
         arrowImageView.setVisibility(VISIBLE);
         progressBar.setVisibility(INVISIBLE);
+        hintTextView.setText("下拉刷新");
     }
 
     @Override

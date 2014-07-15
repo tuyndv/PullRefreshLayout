@@ -1,23 +1,38 @@
 <?xml version="1.0" encoding="utf-8"?>
-<FrameLayout
+<RelativeLayout
     xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
     android:padding="8dp">
-    <ProgressBar
-        android:id="@+id/progressBar"
-        android:layout_width="30dp"
-        android:layout_height="30dp"
-        android:layout_gravity="center"
-        android:visibility="invisible"
-        android:tag="progress"/>
+    <TextView
+        android:id="@+id/text_refreshHeader"
+        android:layout_width="100dp"
+        android:layout_height="20dp"
+        android:gravity="center"
+        android:layout_centerInParent="true"
+        android:text="下拉刷新"
+        android:tag="hintText"/>
 
-    <ImageView
-        android:id="@+id/image_arrow"
+    <FrameLayout
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:src="@drawable/ic_pull_down"
-        android:layout_gravity="center"
-        android:tag="arrow"
-        android:contentDescription="@string/image_content_description"/>
-</FrameLayout>
+        android:layout_toLeftOf="@id/text_refreshHeader"
+        android:layout_marginRight="16dp">
+        <ProgressBar
+            android:id="@+id/progressBar"
+            android:layout_width="30dp"
+            android:layout_height="30dp"
+            android:layout_gravity="center"
+            android:visibility="invisible"
+            android:tag="progressBar"/>
+
+        <ImageView
+            android:id="@+id/image_arrow"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:src="@drawable/ic_pull_down"
+            android:layout_gravity="center"
+            android:tag="arrowImage"
+            android:contentDescription="@string/image_content_description"/>
+    </FrameLayout>
+</RelativeLayout>
