@@ -21,6 +21,7 @@ public class PullRefreshLayout extends ViewGroup{
     private static final String NAME = PullRefreshLayout.class.getSimpleName();
     private static final float DECELERATE_INTERPOLATION_FACTOR = 2f;
     private static final int INVALID_POINTER = -1;
+    private float elasticForce = 0.5f;  //弹力强度，用来实现拉橡皮筋效果
 
     private View mTargetView;
     private View mRefreshHeaderView;
@@ -209,7 +210,7 @@ public class PullRefreshLayout extends ViewGroup{
                     mDownMotionY = y;
                     mIsBeingDragged = true;
                 }
-                updateBaselineOffset((int) (y - mLastMotionY), true, true);
+                updateBaselineOffset((int) ((y - mLastMotionY) * elasticForce), true, true);
                 mLastMotionY = y;
                 break;
             }
@@ -370,6 +371,14 @@ public class PullRefreshLayout extends ViewGroup{
      */
     public void setOnRefreshListener(OnRefreshListener listener) {
         mOnRefreshListener = listener;
+    }
+
+    /**
+     * 设置拉力强度
+     * @param elasticForce 拉力强度，用来实现橡皮筋效果，此值越小垃圾越大，用户越难拉，默认是0.5f
+     */
+    public void setElasticForce(float elasticForce) {
+        this.elasticForce = elasticForce;
     }
 
     /**
