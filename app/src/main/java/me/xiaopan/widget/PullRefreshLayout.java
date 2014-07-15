@@ -276,7 +276,7 @@ public class PullRefreshLayout extends ViewGroup{
      * @return Whether it is possible for the child view of this layout to
      *         scroll up. Override this if the child view is a custom view.
      */
-    public boolean canChildScrollUp() {
+    private boolean canChildScrollUp() {
         if (android.os.Build.VERSION.SDK_INT < 14) {
             if (mTargetView instanceof AbsListView) {
                 final AbsListView absListView = (AbsListView) mTargetView;
@@ -326,21 +326,6 @@ public class PullRefreshLayout extends ViewGroup{
     }
 
     /**
-     * 是否正在刷新
-     */
-    public boolean isRefreshing() {
-        return mRefreshHeader != null && mRefreshHeader.getStatus() == RefreshHeader.Status.REFRESHING;
-    }
-
-    /**
-     * 设置刷新监听器
-     * @param listener 刷新监听器
-     */
-    public void setOnRefreshListener(OnRefreshListener listener) {
-        mOnRefreshListener = listener;
-    }
-
-    /**
      * 回滚
      * @param newBaseLine 新的基准线
      * @param rollbackBeforeRequestLayout 在回滚之前请求布局
@@ -363,6 +348,35 @@ public class PullRefreshLayout extends ViewGroup{
      */
     private void rollback(boolean rollbackBeforeRequestLayout){
         rollback(-1, rollbackBeforeRequestLayout);
+    }
+
+    /**
+     * 设置动画持续时间
+     */
+    public void setAnimationDuration(int animationDuration) {
+        mRollbackRunnable.setAnimationDuration(animationDuration);
+    }
+
+    /**
+     * 设置动画插值器
+     * @param decelerateInterpolator
+     */
+    public void setAnimationDecelerateInterpolator(DecelerateInterpolator decelerateInterpolator) {
+        mRollbackRunnable.setDecelerateInterpolator(decelerateInterpolator);
+    }
+
+    /**
+     * 设置刷新监听器
+     */
+    public void setOnRefreshListener(OnRefreshListener listener) {
+        mOnRefreshListener = listener;
+    }
+
+    /**
+     * 是否正在刷新
+     */
+    public boolean isRefreshing() {
+        return mRefreshHeader != null && mRefreshHeader.getStatus() == RefreshHeader.Status.REFRESHING;
     }
 
     /**
@@ -426,6 +440,14 @@ public class PullRefreshLayout extends ViewGroup{
 
         public void setTo(int to) {
             this.mTo = to;
+        }
+
+        public void setAnimationDuration(int animationDuration) {
+            this.animationDuration = animationDuration;
+        }
+
+        public void setDecelerateInterpolator(DecelerateInterpolator mDecelerateInterpolator) {
+            this.mDecelerateInterpolator = mDecelerateInterpolator;
         }
 
         @Override

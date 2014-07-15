@@ -30,7 +30,7 @@ public class MainActivity extends ActionBarActivity {
                             invalidateOptionsMenu();
                         }
                     }
-                }, 4000);
+                }, 3000);
             }
         });
 
