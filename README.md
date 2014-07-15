@@ -1,6 +1,6 @@
 # ![Logo](https://github.com/xiaopansky/PullRefreshLayout/raw/master/app/src/main/res/drawable-mdpi/ic_launcher.png) PullRefreshLayout
 
-PullRefreshLayout是Android上的一个下拉刷新布局，主要用于实现下拉刷新功能，使用方式非常简单，同SwipeRefreshLayout一样，只需包括一个View即可
+PullRefreshLayout是Android上的一个下拉刷新控件，主要用于实现下拉刷新功能，使用方式非常简单，同SwipeRefreshLayout一样，只需包括一个View即可
 
 ![sample](https://github.com/xiaopansky/PullRefreshLayout/raw/master/docs/sample.jpg)
 
@@ -13,7 +13,7 @@ PullRefreshLayout是Android上的一个下拉刷新布局，主要用于实现�
 >* [Get it on Google Play](https://play.google.com/store/apps/details?id=me.xiaopan.android.pullrefreshlayout)
 >* [Download APK](https://github.com/xiaopansky/PullRefreshLayout/raw/master/releases/PullRefreshLayout-1.0.0.apk)
 
-##Usage Guide
+##Usage guide
 #### 1. 自定义下拉刷新头
 自定义下拉刷新头其实很简单，你只需自定义一个View并实现PullRefreshLayout.PullRefreshHeader接口即可。在自定义的时候有以下几点需要注意：
 1. getTriggerHeight()方法返回的数值将用来判断是否达到触发条件以及触发的时候界面的整体偏移值，所以一定要返回一个正确的值，一般情况下建议此值为刷新头的高度
@@ -24,7 +24,9 @@ PullRefreshLayout是Android上的一个下拉刷新布局，主要用于实现�
 参考示例请参见[MyPullRefreshHeader](https://github.com/xiaopansky/PullRefreshLayout/raw/master/app/src/main/java/me/xiaopan/android/pullrefreshlayout/widget/MyPullRefreshHeader.java)
 
 #### 2.使用自定义的下拉刷新头（MyPullRefreshHeader）
+
 ***方法1：布局中添加***
+
 只用将MyPullRefreshHeader添加到PullRefreshLayout里并且保证是其第二个子View即可，如下：
 ```xml
 <?xml version="1.0" encoding="utf-8"?>
@@ -43,9 +45,9 @@ PullRefreshLayout是Android上的一个下拉刷新布局，主要用于实现�
         android:layout_height="wrap_content"/>
 </me.xiaopan.android.widget.PullRefreshLayout>
 ```
-这种方式不好一点儿就是当有很多地方需要用到PullRefreshLayuot的话，就会有很多冗余代码，因此推荐使用方法2
 
 ***方法2：代码中添加***
+
 在Activity的onCreate()方法中通过PullRefreshLayout的setPullRefreshHeaderClass(Class)方法设置下拉刷新头，如下：
 ```java
 @Override
@@ -63,6 +65,7 @@ protected void onCreate(Bundle savedInstanceState){
 ```
 
 ***方法3：自定义PullRefreshLayout***
+
 创建一个MyPullRefreshLayout继承自PullRefreshLayout在构造函数中通过setPullRefreshHeaderClass(Class)方法设置下拉刷新头，如下：
 ```java
 public class MyPullRefreshLayout extends PullRefreshLayout {
@@ -92,10 +95,12 @@ public class MyPullRefreshLayout extends PullRefreshLayout {
 ```
 
 #### 3. 处理刷新事件
-*** 启动或停止刷新 ***
+***启动或停止刷新***
+
 你可以通过PullRefreshLayout.startRefresh()方法启动刷新，然后通过PullRefreshLayout.stopRefresh()方法停止刷新
 
-*** 监听刷新事件 ***
+***监听刷新事件***
+
 你可以通过PullRefreshLayout.setOnRefreshListener(PullRefreshLayout.OnRefreshListener)方法设置一个监听器来监听刷新事件，如下：
 ```java
 pullRefreshLayout.setOnRefreshListener(new PullRefreshLayout.OnRefreshListener() {
