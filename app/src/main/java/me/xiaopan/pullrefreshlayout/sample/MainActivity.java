@@ -1,77 +1,139 @@
 package me.xiaopan.pullrefreshlayout.sample;
 
-import android.os.Build;
-import android.os.Handler;
-import android.support.v7.app.ActionBarActivity;
+import android.content.res.Configuration;
 import android.os.Bundle;
-import android.view.Menu;
-import android.view.MenuItem;
+import android.support.v4.app.ActionBarDrawerToggle;
+import android.support.v4.app.Fragment;
+import android.support.v4.view.GravityCompat;
+import android.support.v4.widget.DrawerLayout;
+import android.view.View;
+import android.widget.AdapterView;
+import android.widget.ArrayAdapter;
+import android.widget.ListView;
 
+import me.xiaopan.android.inject.InjectContentView;
+import me.xiaopan.android.inject.InjectView;
+import me.xiaopan.android.inject.app.InjectActionBarActivity;
 import me.xiaopan.pullrefreshlayout.R;
-import me.xiaopan.widget.PullRefreshLayout;
+import me.xiaopan.pullrefreshlayout.sample.fragment.GridViewFragment;
+import me.xiaopan.pullrefreshlayout.sample.fragment.ListViewFragment;
+import me.xiaopan.pullrefreshlayout.sample.fragment.ScrollViewFragment;
+import me.xiaopan.pullrefreshlayout.sample.fragment.WebViewFragment;
 
-public class MainActivity extends ActionBarActivity {
-    private PullRefreshLayout pullRefreshLayout;
+@InjectContentView(R.layout.activity_main)
+public class MainActivity extends InjectActionBarActivity {
+    @InjectView(R.id.drawer_layout) private DrawerLayout mDrawerLayout;
+    @InjectView(R.id.left_drawer) private ListView mDrawerList;
+
+    private ActionBarDrawerToggle mDrawerToggle;
+    private CharSequence mDrawerTitle;
+    private CharSequence mTitle;
+    private String[] mPlanetTitles;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        setContentView(R.layout.activity_main);
 
-        pullRefreshLayout = (PullRefreshLayout) findViewById(R.id.pullRefreshLayout);
-        pullRefreshLayout.setOnRefreshListener(new PullRefreshLayout.OnRefreshListener() {
-            @Override
-            public void onRefresh() {
-                new Handler().postDelayed(new Runnable() {
-                    @Override
-                     public void run() {
-                        pullRefreshLayout.stopRefresh();
-                        if(Build.VERSION.SDK_INT >= Build.VERSION_CODES.HONEYCOMB){
-                            invalidateOptionsMenu();
-                        }
-                    }
-                }, 3000);
+        mTitle = mDrawerTitle = getTitle();
+        mPlanetTitles = new String[]{"ScrollView", "ListView", "WebView", "GridView"};
+
+        // set a custom shadow that overlays the main content when the drawer opens
+        mDrawerLayout.setDrawerShadow(R.drawable.drawer_shadow, GravityCompat.START);
+        // set up the drawer's list view with items and click listener
+        mDrawerList.setAdapter(new ArrayAdapter<String>(this, android.R.layout.simple_list_item_1, mPlanetTitles));
+        mDrawerList.setOnItemClickListener(new DrawerItemClickListener());
+
+        // enable ActionBar app icon to behave as action to toggle nav drawer
+        getSupportActionBar().setDisplayHomeAsUpEnabled(true);
+        getSupportActionBar().setHomeButtonEnabled(true);
+
+        // ActionBarDrawerToggle ties together the the proper interactions
+        // between the sliding drawer and the action bar app icon
+        mDrawerToggle = new ActionBarDrawerToggle(this, mDrawerLayout, R.drawable.ic_drawer, R.string.drawer_open, R.string.drawer_close) {
+            public void onDrawerClosed(View view) {
+                getSupportActionBar().setTitle(mTitle);
+                invalidateOptionsMenu(); // creates call to onPrepareOptionsMenu()
             }
-        });
 
-        new Handler().postDelayed(new Runnable() {
-            @Override
-            public void run() {
-                pullRefreshLayout.startRefresh();
-                if(Build.VERSION.SDK_INT >= Build.VERSION_CODES.HONEYCOMB){
-                    invalidateOptionsMenu();
-                }
+            public void onDrawerOpened(View drawerView) {
+                getSupportActionBar().setTitle(mDrawerTitle);
+                invalidateOptionsMenu(); // creates call to onPrepareOptionsMenu()
             }
-        }, 400);
-    }
+        };
+        mDrawerLayout.setDrawerListener(mDrawerToggle);
 
-    @Override
-    public boolean onCreateOptionsMenu(Menu menu) {
-        getMenuInflater().inflate(R.menu.main, menu);
-        return true;
-    }
-
-    @Override
-    public boolean onPrepareOptionsMenu(Menu menu) {
-        MenuItem refreshMenuItem = menu.findItem(R.id.action_refresh);
-        refreshMenuItem.setIcon(pullRefreshLayout.isRefreshing()?R.drawable.ic_refresh_disable:R.drawable.ic_refresh);
-        refreshMenuItem.setTitle(pullRefreshLayout.isRefreshing()?"停止刷新":"刷新");
-        return super.onPrepareOptionsMenu(menu);
-    }
-
-    @Override
-    public boolean onOptionsItemSelected(MenuItem item) {
-        if (item.getItemId() == R.id.action_refresh) {
-            if(pullRefreshLayout.isRefreshing()){
-                pullRefreshLayout.stopRefresh();
-            }else{
-                pullRefreshLayout.startRefresh();
-            }
-            if(Build.VERSION.SDK_INT >= Build.VERSION_CODES.HONEYCOMB){
-                invalidateOptionsMenu();
-            }
-            return true;
+        if (savedInstanceState == null) {
+            selectItem(0);
         }
-        return super.onOptionsItemSelected(item);
+    }
+
+    @Override
+    public void onBackPressed() {
+        Fragment fragment = getSupportFragmentManager().findFragmentById(R.id.content_frame);
+        if(fragment != null && fragment instanceof WebViewFragment){
+            WebViewFragment webViewFragment = (WebViewFragment) fragment;
+            if(!webViewFragment.onBackPressed()){
+                super.onBackPressed();
+            }
+        }else{
+            super.onBackPressed();
+        }
+    }
+
+    @Override
+    public void setTitle(CharSequence title) {
+        mTitle = title;
+        getSupportActionBar().setTitle(mTitle);
+    }
+
+    @Override
+    protected void onPostCreate(Bundle savedInstanceState) {
+        super.onPostCreate(savedInstanceState);
+        // Sync the toggle state after onRestoreInstanceState has occurred.
+        mDrawerToggle.syncState();
+    }
+
+    @Override
+    public void onConfigurationChanged(Configuration newConfig) {
+        super.onConfigurationChanged(newConfig);
+        // Pass any configuration change to the drawer toggls
+        mDrawerToggle.onConfigurationChanged(newConfig);
+    }
+
+    private void selectItem(int position) {
+        Fragment fragment = null;
+        switch(position){
+            case 0 :{
+                fragment = new ScrollViewFragment();
+                break;
+            }
+            case 1 :{
+                fragment = new ListViewFragment();
+                break;
+            }
+            case 2 :{
+                fragment = new WebViewFragment();
+                break;
+            }
+            case 3 :{
+                fragment = new GridViewFragment();
+                break;
+            }
+        }
+
+        if(fragment != null){
+            getSupportFragmentManager().beginTransaction().setCustomAnimations(R.anim.base_slide_to_left_in, R.anim.base_slide_to_left_out).replace(R.id.content_frame, fragment).commit();
+            mDrawerList.setItemChecked(position, true);
+            getSupportActionBar().setSubtitle(mPlanetTitles[position]);
+        }
+        mDrawerLayout.closeDrawer(mDrawerList);
+    }
+
+    /* The click listner for ListView in the navigation drawer */
+    private class DrawerItemClickListener implements ListView.OnItemClickListener {
+        @Override
+        public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
+            selectItem(position);
+        }
     }
 }

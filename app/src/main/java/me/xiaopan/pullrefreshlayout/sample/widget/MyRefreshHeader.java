@@ -1,4 +1,4 @@
-package me.xiaopan.pullrefreshlayout.sample;
+package me.xiaopan.pullrefreshlayout.sample.widget;
 
 import android.content.Context;
 import android.graphics.Matrix;

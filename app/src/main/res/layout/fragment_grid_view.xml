@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="utf-8"?>
+
+<me.xiaopan.widget.PullRefreshLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:id="@+id/pullRefreshLayout"
+    android:padding="0dp">
+
+    <GridView
+        android:id="@+id/gridView"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:numColumns="3"
+        android:verticalSpacing="2dp"
+        android:horizontalSpacing="2dp"
+        android:background="@android:color/black"/>
+
+    <me.xiaopan.pullrefreshlayout.sample.widget.MyRefreshHeader
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"/>
+</me.xiaopan.widget.PullRefreshLayout>
