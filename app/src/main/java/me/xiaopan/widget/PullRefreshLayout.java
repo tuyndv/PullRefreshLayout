@@ -358,29 +358,35 @@ public class PullRefreshLayout extends ViewGroup{
 
     /**
      * 开始刷新
+     * @return true：成功；false：失败，因为当前正在刷新中或者没有刷新头或没有设置刷新监听器
      */
-    private void startRefresh() {
+    public boolean startRefresh() {
         if(isRefreshing() || mRefreshHeader == null || mOnRefreshListener == null){
-           return;
+           return false;
         }
 
         mOnRefreshListener.onRefresh();
         mRefreshHeader.setStatus(RefreshHeader.Status.REFRESHING);
         mRefreshHeader.onToRefreshing();
         rollback(getPaddingTop() + mRefreshHeader.getTriggerHeight(), false);
+
+        return true;
     }
 
     /**
      * 停止刷新
+     * @return true：成功；false：失败，因为当前正在刷新中或者没有刷新头
      */
-    public void stopRefresh() {
+    public boolean stopRefresh() {
         if(!isRefreshing() || mRefreshHeader == null){
-            return;
+            return false;
         }
 
         mRefreshHeader.setStatus(RefreshHeader.Status.NORMAL);
         mRefreshHeader.onToNormal();
         rollback(getPaddingTop(), true);
+
+        return true;
     }
 
     private class RollbackRunnable implements Runnable, Animation.AnimationListener {

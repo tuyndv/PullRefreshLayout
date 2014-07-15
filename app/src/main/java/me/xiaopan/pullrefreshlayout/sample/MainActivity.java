@@ -5,19 +5,21 @@ import android.support.v7.app.ActionBarActivity;
 import android.os.Bundle;
 import android.view.Menu;
 import android.view.MenuItem;
+import android.widget.Toast;
 
 import me.xiaopan.pullrefreshlayout.R;
 import me.xiaopan.widget.PullRefreshLayout;
 
 
 public class MainActivity extends ActionBarActivity {
+    private PullRefreshLayout pullRefreshLayout;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
-        final PullRefreshLayout pullRefreshLayout = (PullRefreshLayout) findViewById(R.id.pullRefreshLayout);
+        pullRefreshLayout = (PullRefreshLayout) findViewById(R.id.pullRefreshLayout);
         pullRefreshLayout.setOnRefreshListener(new PullRefreshLayout.OnRefreshListener() {
             @Override
             public void onRefresh() {
@@ -26,11 +28,10 @@ public class MainActivity extends ActionBarActivity {
                     public void run() {
                         pullRefreshLayout.stopRefresh();
                     }
-                }, 2000);
+                }, 4000);
             }
         });
     }
-
 
     @Override
     public boolean onCreateOptionsMenu(Menu menu) {
@@ -45,7 +46,10 @@ public class MainActivity extends ActionBarActivity {
         // automatically handle clicks on the Home/Up button, so long
         // as you specify a parent activity in AndroidManifest.xml.
         int id = item.getItemId();
-        if (id == R.id.action_settings) {
+        if (id == R.id.action_refresh) {
+            if(!pullRefreshLayout.startRefresh()){
+                Toast.makeText(getBaseContext(), "正在刷新中", Toast.LENGTH_SHORT).show();
+            }
             return true;
         }
         return super.onOptionsItemSelected(item);
