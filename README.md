@@ -21,7 +21,16 @@ PullRefreshLayout是Android上的一个下拉刷新控件，主要用于实现�
 > 3. onToWaitRefresh()、onToRefreshing()、onToNormal()三个方法是刷新头不同状态的回调方法，你需要在这三个方法中改变刷新头的显示样式来提示用户
 > 4. 在下拉的过程中会持续回调onScroll(int)方法并且会传进去一个下拉距离参数，你可以根据下拉距离参数做一些动画（例如旋转箭头）来增强用户体验
 
-参考示例请参见[MyPullRefreshHeader](https://github.com/xiaopansky/PullRefreshLayout/raw/master/app/src/main/java/me/xiaopan/android/pullrefreshlayout/widget/MyPullRefreshHeader.java)
+***注意事项***
+
+你需要保证下拉刷新头里面的所有子View在下拉的过程中宽高不会发生改变，因为一旦发生改变就会触发PullRefreshLayout的onLayout()，结果是会重置滑动位置，导致无法往下拉，特别值得注意的是提示TextView宽高，绝对不能用wrap_content，一定要用绝对宽高
+
+另外，我会尽快解决此问题，但现在你要用的话还请这样做
+
+***参考示例***
+
+>* [refresh_header.xml](https://github.com/xiaopansky/PullRefreshLayout/raw/master/app/src/main/res/layout/refresh_header.xml)
+>* [MyPullRefreshHeader](https://github.com/xiaopansky/PullRefreshLayout/raw/master/app/src/main/java/me/xiaopan/android/pullrefreshlayout/widget/MyPullRefreshHeader.java)
 
 #### 2.使用自定义的下拉刷新头（MyPullRefreshHeader）
 
