@@ -32,7 +32,6 @@ import me.xiaopan.android.inject.InjectView;
 import me.xiaopan.android.inject.app.InjectActionBarActivity;
 import me.xiaopan.android.pullrefreshlayout.fragment.ExpandableListViewFragment;
 import me.xiaopan.android.pullrefreshlayout.fragment.GridViewFragment;
-import me.xiaopan.android.pullrefreshlayout.fragment.ImageViewFragment;
 import me.xiaopan.android.pullrefreshlayout.fragment.ListViewFragment;
 import me.xiaopan.android.pullrefreshlayout.fragment.ScrollViewFragment;
 import me.xiaopan.android.pullrefreshlayout.fragment.WebViewFragment;
@@ -52,7 +51,7 @@ public class MainActivity extends InjectActionBarActivity {
         super.onCreate(savedInstanceState);
 
         mTitle = mDrawerTitle = getTitle();
-        mPlanetTitles = new String[]{"ScrollView", "ListView", "WebView", "GridView", "ExpandableListView", "ImageView"};
+        mPlanetTitles = new String[]{"ScrollView", "ListView", "WebView", "GridView", "ExpandableListView"};
 
         // set a custom shadow that overlays the main content when the drawer opens
         mDrawerLayout.setDrawerShadow(R.drawable.drawer_shadow, GravityCompat.START);
@@ -138,10 +137,6 @@ public class MainActivity extends InjectActionBarActivity {
             }
             case 4 :{
                 fragment = new ExpandableListViewFragment();
-                break;
-            }
-            case 5 :{
-                fragment = new ImageViewFragment();
                 break;
             }
         }

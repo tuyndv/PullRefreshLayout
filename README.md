@@ -1,12 +1,12 @@
 # ![Logo](https://github.com/xiaopansky/PullRefreshLayout/raw/master/app/src/main/res/drawable-mdpi/ic_launcher.png) PullRefreshLayout
 
-PullRefreshLayout是Android上的一个下拉刷新控件，主要用于实现下拉刷新功能，使用方式非常简单，同SwipeRefreshLayout一样，只需包括一个View即可
+PullRefreshLayout是Android上的一个下拉刷新控件，主要用于实现下拉刷新功能，使用方式非常简单，同SwipeRefreshLayout一样，只需包括一个可以滚动的View即可
 
 ![sample](https://github.com/xiaopansky/PullRefreshLayout/raw/master/docs/sample.jpg)
 
 ##Features
->* 可包括任意View并实现下拉刷新功能
->* 使用简单，只需包括View即可为这个View添加下拉刷新功能
+>* 支持多种View，亲测的有ScrollView、ListView、WebView、GridView以及ExpandableListView
+>* 使用简单，只需包括一个可以滚动的View即可为这个View添加下拉刷新功能
 >* 可自定义下拉刷新头
 
 ## Sample App
@@ -20,12 +20,6 @@ PullRefreshLayout是Android上的一个下拉刷新控件，主要用于实现�
 > 2. getStatus()、setStatus(Status)方法用来保存和获取刷新头的状态，一定要实现并好好写
 > 3. onToWaitRefresh()、onToRefreshing()、onToNormal()三个方法是刷新头不同状态的回调方法，你需要在这三个方法中改变刷新头的显示样式来提示用户
 > 4. 在下拉的过程中会持续回调onScroll(int)方法并且会传进去一个下拉距离参数，你可以根据下拉距离参数做一些动画（例如旋转箭头）来增强用户体验
-
-***注意事项***
-
-你需要保证下拉刷新头里面的所有子View在下拉的过程中宽高不会发生改变，因为一旦发生改变就会触发PullRefreshLayout的onLayout()，结果是会重置滑动位置，导致无法往下拉，特别值得注意的是提示TextView的宽高，绝对不能用wrap_content，一定要用绝对宽高
-
-另外，我会尽快解决此问题，但现在你要用的话还请这样做
 
 ***参考示例***
 
@@ -134,7 +128,8 @@ pullRefreshLayout.setOnRefreshListener(new PullRefreshLayout.OnRefreshListener()
 
 #### 5. 注意事项：
 >* PullRefreshLayout必须包含1个或2个子View才能正常工作，少了或者多了都会抛出异常
->* 你必须设置OnRefreshListener和添加下拉刷新头才会开启实现下拉刷新功能，否则就跟普通的Layout没有区别
+>* 必须添加PullRefreshHeader才能看到下拉效果
+>* 必须设置OnRefreshListene在下拉的时候才会触发刷新事件
 
 ##Downloads
 >* [android-pull-refresh-layout-1.0.0.jar](https://github.com/xiaopansky/PullRefreshLayout/raw/master/releases/android-pull-refresh-layout-1.0.0.jar)
