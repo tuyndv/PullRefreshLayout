@@ -117,11 +117,15 @@ pullRefreshLayout.setOnRefreshListener(new PullRefreshLayout.OnRefreshListener()
 });
 ```
 
-##### 4. 扩展功能
+#### 4. 扩展功能
 >* isRefreshing() 判断是否正在刷新
 >* setAnimationDuration(int) 设置回滚动画持续时间
 >* setAnimationInterpolator(Interpolator) 设置回滚动画插值器
 >* setElasticForce() 设置拉力强度，取值范围是[0.0f-1.0f]，值越小拉力越强，用户越难拉
+
+#### 5. 注意事项：
+>* PullRefreshLayout必须包含1个或2个子View才能正常工作，少了或者多了都会抛出异常
+>* 你必须设置OnRefreshListener和添加下拉刷新头才会开启实现下拉刷新功能，否则就跟普通的Layout没有区别
 
 ##Downloads
 >* [android-pull-refresh-layout-1.0.0.jar](https://github.com/xiaopansky/PullRefreshLayout/raw/master/releases/android-pull-refresh-layout-1.0.0.jar)
