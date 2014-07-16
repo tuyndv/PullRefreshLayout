@@ -23,7 +23,7 @@ PullRefreshLayout是Android上的一个下拉刷新控件，主要用于实现�
 
 ***注意事项***
 
-你需要保证下拉刷新头里面的所有子View在下拉的过程中宽高不会发生改变，因为一旦发生改变就会触发PullRefreshLayout的onLayout()，结果是会重置滑动位置，导致无法往下拉，特别值得注意的是提示TextView宽高，绝对不能用wrap_content，一定要用绝对宽高
+你需要保证下拉刷新头里面的所有子View在下拉的过程中宽高不会发生改变，因为一旦发生改变就会触发PullRefreshLayout的onLayout()，结果是会重置滑动位置，导致无法往下拉，特别值得注意的是提示TextView的宽高，绝对不能用wrap_content，一定要用绝对宽高
 
 另外，我会尽快解决此问题，但现在你要用的话还请这样做
 
