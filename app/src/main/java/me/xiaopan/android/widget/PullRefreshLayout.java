@@ -33,7 +33,7 @@ import android.widget.AbsListView;
  * @author xiaopan
  * @version 1.0.0 Home https://github.com/xiaopansky/PullRefreshLayout
  */
-public class PullRefreshLayout extends ViewGroup implements ScrollManager.Bridge{
+public class PullRefreshLayout extends ViewGroup implements NewScrollManager.Bridge, NewScrollManager.ScrollListener{
     private static final String NAME = PullRefreshLayout.class.getSimpleName();
     private static final int INVALID_POINTER = -1;
 
@@ -52,7 +52,7 @@ public class PullRefreshLayout extends ViewGroup implements ScrollManager.Bridge
     private float elasticForce = 0.5f;  //弹力强度，用来实现拉橡皮筋效果
     private boolean mIsBeingDragged;    // 标识是否开始拖拽
 
-    private ScrollManager mScrollManager; // 回滚器，用于回滚TargetView和HeaderView
+    private NewScrollManager mScrollManager; // 回滚器，用于回滚TargetView和HeaderView
     private OnRefreshListener mOnRefreshListener;   // 刷新监听器
 
     private boolean ready;  // PullRefreshLayout是否已经准备好可以执行刷新了
@@ -67,7 +67,7 @@ public class PullRefreshLayout extends ViewGroup implements ScrollManager.Bridge
 
         touchSlop = ViewConfiguration.get(context).getScaledTouchSlop();
         originalOffset = getPaddingTop();
-        mScrollManager = new ScrollManager(getContext(), this);
+        mScrollManager = new NewScrollManager(getContext(), this, this);
     }
 
     @Override
@@ -127,7 +127,7 @@ public class PullRefreshLayout extends ViewGroup implements ScrollManager.Bridge
         childBottom = childTop + childView.getMeasuredHeight() - targetViewHeightDecrement;
         childView.layout(childLeft, childTop, childRight, childBottom);
         targetView = childView;
-        Log.d("布局", "currentOffset="+currentOffset);
+        Log.e("onLayout", "currentOffset="+currentOffset);
 
         // 布局第二个子视图
         if(getChildCount() < 2) return;
@@ -145,6 +145,14 @@ public class PullRefreshLayout extends ViewGroup implements ScrollManager.Bridge
             if(waitRefresh){
                 delayedStartRefresh();
             }
+        }
+    }
+
+    @Override
+    public void computeScroll() {
+        super.computeScroll();
+        if(mScrollManager != null){
+            mScrollManager.computeScroll();
         }
     }
 
@@ -167,7 +175,7 @@ public class PullRefreshLayout extends ViewGroup implements ScrollManager.Bridge
 
     @Override
     public boolean onInterceptTouchEvent(MotionEvent ev) {
-        if (!isEnabled() || targetView == null || headerView == null || headerInterface == null || mScrollManager.isRunning() || canChildScrollUp()) {
+        if (!isEnabled() || targetView == null || headerView == null || headerInterface == null || (mScrollManager != null && mScrollManager.isRunning()) || canChildScrollUp()) {
             // Fail fast if we're not in a state where a swipe is possible
             return false;
         }
@@ -216,7 +224,7 @@ public class PullRefreshLayout extends ViewGroup implements ScrollManager.Bridge
 
     @Override
     public boolean onTouchEvent(MotionEvent ev) {
-        if (!isEnabled() || targetView == null || headerView == null || headerInterface == null || mScrollManager.isRunning() || canChildScrollUp()) {
+        if (!isEnabled() || targetView == null || headerView == null || headerInterface == null || (mScrollManager != null && mScrollManager.isRunning()) || canChildScrollUp()) {
             // Fail fast if we're not in a state where a swipe is possible
             return false;
         }
@@ -272,6 +280,7 @@ public class PullRefreshLayout extends ViewGroup implements ScrollManager.Bridge
                         startRefresh(); // 如果是等待刷新就立马开启刷新
                     }else{
                         mScrollManager.startScroll(-1, true); // 否则就回滚
+//                        mScrollManager.startScroll(getPaddingTop(), true);
                     }
                 }else{
                     mScrollManager.startScroll(-1, true); // 否则就回滚
@@ -353,21 +362,16 @@ public class PullRefreshLayout extends ViewGroup implements ScrollManager.Bridge
      */
     @Override
     public void updateCurrentOffset(int newCurrentOffset, boolean rollback, boolean callbackHeader) {
-        String d = "newCurrentOffset="+newCurrentOffset+"; originalOffset="+originalOffset;
         if(rollback){
             if(newCurrentOffset < originalOffset){
                 newCurrentOffset = originalOffset;
-                d+="; 往回滚超了";
             }
         }else{
             if(newCurrentOffset > originalOffset){
                 newCurrentOffset = originalOffset;
-                d+="; 往上滚超了";
+                Log.i("", "程玲了");
             }
         }
-        d+="; newCurrentOffset="+newCurrentOffset;
-        Log.w("更新", d);
-        // 更新TargetView和HeaderView的位置
         currentOffset = newCurrentOffset;
         requestLayout();
 
@@ -402,13 +406,6 @@ public class PullRefreshLayout extends ViewGroup implements ScrollManager.Bridge
      */
     public void setAnimationDuration(int animationDuration) {
         mScrollManager.setAnimationDuration(animationDuration);
-    }
-
-    /**
-     * 设置动画插值器
-     */
-    public void setAnimationInterpolator(Interpolator interpolator) {
-        mScrollManager.setInterpolator(interpolator);
     }
 
     /**
@@ -469,6 +466,11 @@ public class PullRefreshLayout extends ViewGroup implements ScrollManager.Bridge
         mScrollManager.startScroll(getPaddingTop(), false);
 
         return true;
+    }
+
+    @Override
+    public void onScrollEnd() {
+
     }
 
     public interface OnRefreshListener {

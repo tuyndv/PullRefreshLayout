@@ -20,6 +20,7 @@ import android.content.Intent;
 import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
+import android.os.Handler;
 import android.view.Menu;
 import android.view.MenuInflater;
 import android.view.MenuItem;
@@ -52,7 +53,12 @@ public abstract class PullRefreshFragment extends InjectFragment{
             }
         });
 
-        pullRefreshLayout.startRefresh();
+        new Handler().post(new Runnable() {
+            @Override
+            public void run() {
+                pullRefreshLayout.startRefresh();
+            }
+        });
     }
 
     protected abstract void onRefreshContent();
@@ -74,14 +80,19 @@ public abstract class PullRefreshFragment extends InjectFragment{
     @Override
     public boolean onOptionsItemSelected(MenuItem item) {
         if (item.getItemId() == R.id.action_refresh) {
-            if(pullRefreshLayout.isRefreshing()){
-                pullRefreshLayout.stopRefresh();
-            }else{
-                pullRefreshLayout.startRefresh();
-            }
-            if(Build.VERSION.SDK_INT >= Build.VERSION_CODES.HONEYCOMB){
-                invalidateOptionsMenu();
-            }
+            new Handler().post(new Runnable() {
+                @Override
+                public void run() {
+                    if(pullRefreshLayout.isRefreshing()){
+                        pullRefreshLayout.stopRefresh();
+                    }else{
+                        pullRefreshLayout.startRefresh();
+                    }
+                    if(Build.VERSION.SDK_INT >= Build.VERSION_CODES.HONEYCOMB){
+                        invalidateOptionsMenu();
+                    }
+                }
+            });
             return true;
         }else if(item.getItemId() == R.id.action_github){
             Intent intent = new Intent(Intent.ACTION_VIEW, Uri.parse("https://github.com/xiaopansky/PullRefreshLayout"));
