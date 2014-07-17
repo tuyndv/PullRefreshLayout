@@ -48,20 +48,14 @@ public class WebViewFragment extends PullRefreshFragment {
             public void onPageFinished(WebView view, String url) {
                 super.onPageFinished(view, url);
                 pullRefreshLayout.stopRefresh();
-                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.HONEYCOMB) {
-                    setHasOptionsMenu(false);
-                    setHasOptionsMenu(true);
-                }
+                invalidateOptionsMenu();
             }
 
             @Override
             public void onReceivedError(WebView view, int errorCode, String description, String failingUrl) {
                 super.onReceivedError(view, errorCode, description, failingUrl);
                 pullRefreshLayout.stopRefresh();
-                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.HONEYCOMB) {
-                    setHasOptionsMenu(false);
-                    setHasOptionsMenu(true);
-                }
+                invalidateOptionsMenu();
             }
         });
     }

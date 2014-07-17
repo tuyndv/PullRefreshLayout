@@ -25,10 +25,7 @@ import android.view.MotionEvent;
 import android.view.View;
 import android.view.ViewConfiguration;
 import android.view.ViewGroup;
-import android.view.animation.Animation;
-import android.view.animation.DecelerateInterpolator;
 import android.view.animation.Interpolator;
-import android.view.animation.Transformation;
 import android.widget.AbsListView;
 
 /**
@@ -36,9 +33,8 @@ import android.widget.AbsListView;
  * @author xiaopan
  * @version 1.0.0 Home https://github.com/xiaopansky/PullRefreshLayout
  */
-public class PullRefreshLayout extends ViewGroup{
+public class PullRefreshLayout extends ViewGroup implements ScrollManager.Bridge{
     private static final String NAME = PullRefreshLayout.class.getSimpleName();
-    private static final float DECELERATE_INTERPOLATION_FACTOR = 2f;
     private static final int INVALID_POINTER = -1;
 
     private View targetView;
@@ -54,10 +50,9 @@ public class PullRefreshLayout extends ViewGroup{
     private float downMotionY;  // 按下的时候记录Y位置
     private float lastMotionY; // 上一个Y位置，联合最新的Y位置计算移动量
     private float elasticForce = 0.5f;  //弹力强度，用来实现拉橡皮筋效果
-    private boolean mReturningToStart;  // 标识是否正在返回到开始位置
     private boolean mIsBeingDragged;    // 标识是否开始拖拽
 
-    private RollbackRunnable mRollbackRunnable; // 回滚器，用于回滚TargetView和HeaderView
+    private ScrollManager mScrollManager; // 回滚器，用于回滚TargetView和HeaderView
     private OnRefreshListener mOnRefreshListener;   // 刷新监听器
 
     private boolean ready;  // PullRefreshLayout是否已经准备好可以执行刷新了
@@ -72,7 +67,7 @@ public class PullRefreshLayout extends ViewGroup{
 
         touchSlop = ViewConfiguration.get(context).getScaledTouchSlop();
         originalOffset = getPaddingTop();
-        mRollbackRunnable = new RollbackRunnable(getResources().getInteger(android.R.integer.config_mediumAnimTime), new DecelerateInterpolator(DECELERATE_INTERPOLATION_FACTOR));
+        mScrollManager = new ScrollManager(getContext(), this);
     }
 
     @Override
@@ -132,6 +127,7 @@ public class PullRefreshLayout extends ViewGroup{
         childBottom = childTop + childView.getMeasuredHeight() - targetViewHeightDecrement;
         childView.layout(childLeft, childTop, childRight, childBottom);
         targetView = childView;
+        Log.d("布局", "currentOffset="+currentOffset);
 
         // 布局第二个子视图
         if(getChildCount() < 2) return;
@@ -171,18 +167,12 @@ public class PullRefreshLayout extends ViewGroup{
 
     @Override
     public boolean onInterceptTouchEvent(MotionEvent ev) {
-        final int action = MotionEventCompat.getActionMasked(ev);
-
-        if (mReturningToStart && action == MotionEvent.ACTION_DOWN) {
-            mReturningToStart = false;
-        }
-
-        if (!isEnabled() || targetView == null || headerView == null || headerInterface == null || mReturningToStart || canChildScrollUp()) {
+        if (!isEnabled() || targetView == null || headerView == null || headerInterface == null || mScrollManager.isRunning() || canChildScrollUp()) {
             // Fail fast if we're not in a state where a swipe is possible
             return false;
         }
 
-        switch (action) {
+        switch (MotionEventCompat.getActionMasked(ev)) {
             case MotionEvent.ACTION_DOWN:
                 downMotionY = lastMotionY = ev.getY();
                 activePointerId = MotionEventCompat.getPointerId(ev, 0);
@@ -226,18 +216,12 @@ public class PullRefreshLayout extends ViewGroup{
 
     @Override
     public boolean onTouchEvent(MotionEvent ev) {
-        final int action = MotionEventCompat.getActionMasked(ev);
-
-        if (mReturningToStart && action == MotionEvent.ACTION_DOWN) {
-            mReturningToStart = false;
-        }
-
-        if (!isEnabled() || targetView == null || headerView == null || headerInterface == null || mReturningToStart || canChildScrollUp()) {
+        if (!isEnabled() || targetView == null || headerView == null || headerInterface == null || mScrollManager.isRunning() || canChildScrollUp()) {
             // Fail fast if we're not in a state where a swipe is possible
             return false;
         }
 
-        switch (action) {
+        switch (MotionEventCompat.getActionMasked(ev)) {
             case MotionEvent.ACTION_DOWN:{
                 downMotionY = ev.getY();
                 lastMotionY = ev.getY();
@@ -260,7 +244,8 @@ public class PullRefreshLayout extends ViewGroup{
                     downMotionY = y;
                     mIsBeingDragged = true;
                 }
-                updateOffset((int) ((y - lastMotionY) * elasticForce), true, true);
+                int addOffset = (int) ((y - lastMotionY) * elasticForce);
+                updateCurrentOffset(currentOffset + addOffset, true, true);
                 lastMotionY = y;
                 break;
             }
@@ -281,15 +266,15 @@ public class PullRefreshLayout extends ViewGroup{
                 activePointerId = INVALID_POINTER;
 
                 if(isRefreshing()){
-                    rollback(-1, true); // 如果正在刷新中就回滚
+                    mScrollManager.startScroll(-1, true); // 如果正在刷新中就回滚
                 }else if(headerInterface != null){
                     if(headerInterface.getStatus() == PullRefreshHeader.Status.WAIT_REFRESH){
                         startRefresh(); // 如果是等待刷新就立马开启刷新
                     }else{
-                        rollback(-1, true); // 否则就回滚
+                        mScrollManager.startScroll(-1, true); // 否则就回滚
                     }
                 }else{
-                    rollback(-1, true); // 否则就回滚
+                    mScrollManager.startScroll(-1, true); // 否则就回滚
                 }
 
                 return false;
@@ -302,13 +287,11 @@ public class PullRefreshLayout extends ViewGroup{
     @Override
     public void onAttachedToWindow() {
         super.onAttachedToWindow();
-        removeCallbacks(mRollbackRunnable);
     }
 
     @Override
     public void onDetachedFromWindow() {
         super.onDetachedFromWindow();
-        removeCallbacks(mRollbackRunnable);
     }
 
     private void onSecondaryPointerUp(MotionEvent ev) {
@@ -342,27 +325,50 @@ public class PullRefreshLayout extends ViewGroup{
         }
     }
 
+    @Override
+    public int getCurrentOffset() {
+        return currentOffset;
+    }
+
+    @Override
+    public int getOriginalOffset() {
+        return originalOffset;
+    }
+
+    @Override
+    public void setOriginalOffset(int newOriginalOffset) {
+        this.originalOffset = newOriginalOffset;
+    }
+
+    @Override
+    public void setTargetViewHeightDecrement(int newTargetViewHeightDecrement) {
+        this.targetViewHeightDecrement = newTargetViewHeightDecrement;
+    }
+
     /**
-     * 更新基准线位置偏移
-     * @param offset 偏移量
+     * 更新基准线位置
+     * @param newCurrentOffset 新的位置
      * @param rollback 是否是在往回滚
      * @param callbackHeader 是否需要回调HeaderView
      */
-    private void updateOffset(int offset, boolean rollback, boolean callbackHeader) {
-        // 检查偏移量防止滚动过头
-        int newOffset = currentOffset + offset;
+    @Override
+    public void updateCurrentOffset(int newCurrentOffset, boolean rollback, boolean callbackHeader) {
+        String d = "newCurrentOffset="+newCurrentOffset+"; originalOffset="+originalOffset;
         if(rollback){
-            if(newOffset < originalOffset){
-                offset -= newOffset;
+            if(newCurrentOffset < originalOffset){
+                newCurrentOffset = originalOffset;
+                d+="; 往回滚超了";
             }
         }else{
-            if(newOffset > originalOffset){
-                offset = newOffset - originalOffset;
+            if(newCurrentOffset > originalOffset){
+                newCurrentOffset = originalOffset;
+                d+="; 往上滚超了";
             }
         }
-
+        d+="; newCurrentOffset="+newCurrentOffset;
+        Log.w("更新", d);
         // 更新TargetView和HeaderView的位置
-        currentOffset += offset;
+        currentOffset = newCurrentOffset;
         requestLayout();
 
         // 回调HeaderView
@@ -379,29 +385,9 @@ public class PullRefreshLayout extends ViewGroup{
         }
     }
 
-    /**
-     * 回滚
-     * @param newOriginalOffset 新的原始偏移量
-     * @param diminish 如果需要改变TargetView的大小的话，在回滚的过程中是否采用慢慢变小的方式来改变其大小，否则的话采用慢慢变大的方式
-     */
-    private void rollback(int newOriginalOffset, boolean diminish){
-        if(newOriginalOffset != originalOffset && newOriginalOffset >= 0){
-            if(diminish){
-                mRollbackRunnable.from2 = 0;
-                mRollbackRunnable.to2 = Math.abs(newOriginalOffset - originalOffset);
-            }else{
-                mRollbackRunnable.from2 = Math.abs(newOriginalOffset - originalOffset);
-                mRollbackRunnable.to2 = 0;
-            }
-            originalOffset = newOriginalOffset;
-        }else{
-            mRollbackRunnable.from2 = 0;
-            mRollbackRunnable.to2 = 0;
-        }
-        
-        mRollbackRunnable.mFrom = currentOffset;
-        mRollbackRunnable.mTo = originalOffset;
-        mRollbackRunnable.run();
+    @Override
+    public View getView() {
+        return this;
     }
 
     /**
@@ -415,14 +401,14 @@ public class PullRefreshLayout extends ViewGroup{
      * 设置动画持续时间
      */
     public void setAnimationDuration(int animationDuration) {
-        mRollbackRunnable.setAnimationDuration(animationDuration);
+        mScrollManager.setAnimationDuration(animationDuration);
     }
 
     /**
      * 设置动画插值器
      */
     public void setAnimationInterpolator(Interpolator interpolator) {
-        mRollbackRunnable.setInterpolator(interpolator);
+        mScrollManager.setInterpolator(interpolator);
     }
 
     /**
@@ -464,7 +450,7 @@ public class PullRefreshLayout extends ViewGroup{
         headerInterface.setStatus(PullRefreshHeader.Status.REFRESHING);
         headerInterface.onToRefreshing();
         mOnRefreshListener.onRefresh();
-        rollback(getPaddingTop() + headerInterface.getTriggerHeight(), true);
+        mScrollManager.startScroll(getPaddingTop() + headerInterface.getTriggerHeight(), true);
 
         return true;
     }
@@ -480,89 +466,9 @@ public class PullRefreshLayout extends ViewGroup{
 
         headerInterface.setStatus(PullRefreshHeader.Status.NORMAL);
         headerInterface.onToNormal();
-        rollback(getPaddingTop(), false);
+        mScrollManager.startScroll(getPaddingTop(), false);
 
         return true;
-    }
-
-    private class RollbackRunnable implements Runnable{
-        private int animationDuration;
-        private Interpolator mInterpolator;
-        private RollbackAnimation rollbackAnimation;
-
-        private int mFrom;
-        private int mTo;
-        private int from2;
-        private int to2;
-
-        private RollbackRunnable(int animationDuration, Interpolator mInterpolator) {
-            this.animationDuration = animationDuration;
-            this.rollbackAnimation = new RollbackAnimation();
-            this.mInterpolator = mInterpolator;
-        }
-
-        private int getFrom() {
-            return mFrom;
-        }
-
-        private int getTo() {
-            return mTo;
-        }
-
-        private int getFrom2() {
-            return from2;
-        }
-
-        private int getTo2() {
-            return to2;
-        }
-
-        public void setAnimationDuration(int animationDuration) {
-            this.animationDuration = animationDuration;
-        }
-
-        public void setInterpolator(Interpolator interpolator) {
-            this.mInterpolator = interpolator;
-        }
-
-        @Override
-        public void run() {
-            if(targetView == null ||getFrom() == getTo()){
-                return;
-            }
-            
-            mReturningToStart = true;
-            rollbackAnimation.reset();
-            rollbackAnimation.setDuration(animationDuration);
-            rollbackAnimation.setInterpolator(mInterpolator);
-            targetView.startAnimation(rollbackAnimation);
-        }
-
-        private class RollbackAnimation extends Animation {
-            @Override
-            public void applyTransformation(float interpolatedTime, Transformation t) {
-                if(targetView == null){
-                    return;
-                }
-
-                // 计算整体偏移量
-                int targetTop = (getFrom() + (int)((getTo() - getFrom()) * interpolatedTime));
-                int currentTop = targetView.getTop();
-                int offset = targetTop - targetView.getTop();
-                if (offset + currentTop < 0) {
-                    offset = 0 - currentTop;
-                }
-
-                // 计算TargetView高度减量
-                if(getFrom2() != getTo2()){
-                    targetViewHeightDecrement = (getFrom2() + (int)((getTo2() - getFrom2()) * interpolatedTime));
-                }else{
-                    targetViewHeightDecrement = 0;
-                }
-
-                updateOffset(offset, getFrom() > getTo(), false);
-            }
-        }
     }
 
     public interface OnRefreshListener {

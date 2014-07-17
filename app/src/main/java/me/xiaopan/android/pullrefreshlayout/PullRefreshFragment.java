@@ -47,8 +47,7 @@ public abstract class PullRefreshFragment extends InjectFragment{
         pullRefreshLayout.setOnRefreshListener(new PullRefreshLayout.OnRefreshListener() {
             @Override
             public void onRefresh() {
-                setHasOptionsMenu(false);
-                setHasOptionsMenu(true);
+                invalidateOptionsMenu();
                 onRefreshContent();
             }
         });
@@ -57,6 +56,11 @@ public abstract class PullRefreshFragment extends InjectFragment{
     }
 
     protected abstract void onRefreshContent();
+
+    protected void invalidateOptionsMenu(){
+        setHasOptionsMenu(false);
+        setHasOptionsMenu(true);
+    }
 
     @Override
     public void onCreateOptionsMenu(Menu menu, MenuInflater inflater) {
@@ -76,8 +80,7 @@ public abstract class PullRefreshFragment extends InjectFragment{
                 pullRefreshLayout.startRefresh();
             }
             if(Build.VERSION.SDK_INT >= Build.VERSION_CODES.HONEYCOMB){
-                setHasOptionsMenu(false);
-                setHasOptionsMenu(true);
+                invalidateOptionsMenu();
             }
             return true;
         }else if(item.getItemId() == R.id.action_github){

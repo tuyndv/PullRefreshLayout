@@ -75,10 +75,7 @@ public class ExpandableListViewFragment extends PullRefreshFragment {
 
                 listView.setAdapter(new GroupAdapter(getActivity(), groups));
                 pullRefreshLayout.stopRefresh();
-                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.HONEYCOMB) {
-                    setHasOptionsMenu(false);
-                    setHasOptionsMenu(true);
-                }
+                invalidateOptionsMenu();
             }
         }.execute(0);
     }

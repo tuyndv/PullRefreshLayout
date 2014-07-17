@@ -124,10 +124,7 @@ public class ListViewFragment extends PullRefreshFragment {
 
                 listView.setAdapter(new ArrayAdapter<String>(getActivity(), android.R.layout.simple_list_item_1, strings));
                 pullRefreshLayout.stopRefresh();
-                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.HONEYCOMB) {
-                    setHasOptionsMenu(false);
-                    setHasOptionsMenu(true);
-                }
+                invalidateOptionsMenu();
             }
         }.execute(0);
     }

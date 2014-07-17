@@ -58,10 +58,7 @@ public class GridViewFragment extends PullRefreshFragment {
 
                 gridView.setAdapter(new GridImageAdapter(getActivity(), urls[index++%urls.length], 3));
                 pullRefreshLayout.stopRefresh();
-                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.HONEYCOMB) {
-                    setHasOptionsMenu(false);
-                    setHasOptionsMenu(true);
-                }
+                invalidateOptionsMenu();
             }
         }, 2000);
     }

@@ -17,11 +17,14 @@
 package me.xiaopan.android.pullrefreshlayout;
 
 import android.content.res.Configuration;
+import android.os.Build;
 import android.os.Bundle;
 import android.support.v4.app.ActionBarDrawerToggle;
 import android.support.v4.app.Fragment;
+import android.support.v4.app.FragmentManager;
 import android.support.v4.view.GravityCompat;
 import android.support.v4.widget.DrawerLayout;
+import android.util.Log;
 import android.view.View;
 import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
@@ -37,7 +40,7 @@ import me.xiaopan.android.pullrefreshlayout.fragment.ScrollViewFragment;
 import me.xiaopan.android.pullrefreshlayout.fragment.WebViewFragment;
 
 @InjectContentView(R.layout.activity_main)
-public class MainActivity extends InjectActionBarActivity {
+public class MainActivity extends InjectActionBarActivity{
     @InjectView(R.id.drawer_layout) private DrawerLayout mDrawerLayout;
     @InjectView(R.id.left_drawer) private ListView mDrawerList;
 
@@ -68,12 +71,12 @@ public class MainActivity extends InjectActionBarActivity {
         mDrawerToggle = new ActionBarDrawerToggle(this, mDrawerLayout, R.drawable.ic_drawer, R.string.drawer_open, R.string.drawer_close) {
             public void onDrawerClosed(View view) {
                 getSupportActionBar().setTitle(mTitle);
-                invalidateOptionsMenu(); // creates call to onPrepareOptionsMenu()
+                supportInvalidateOptionsMenu();
             }
 
             public void onDrawerOpened(View drawerView) {
                 getSupportActionBar().setTitle(mDrawerTitle);
-                invalidateOptionsMenu(); // creates call to onPrepareOptionsMenu()
+                supportInvalidateOptionsMenu();
             }
         };
         mDrawerLayout.setDrawerListener(mDrawerToggle);

@@ -44,10 +44,7 @@ public class ScrollViewFragment extends PullRefreshFragment {
 
                 contentTextView.setText(contents[index++%contents.length]);
                 pullRefreshLayout.stopRefresh();
-                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.HONEYCOMB) {
-                    setHasOptionsMenu(false);
-                    setHasOptionsMenu(true);
-                }
+                invalidateOptionsMenu();
             }
         }, 2000);
     }
