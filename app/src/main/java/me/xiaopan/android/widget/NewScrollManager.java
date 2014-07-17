@@ -1,19 +1,11 @@
 package me.xiaopan.android.widget;
 
 import android.content.Context;
-import android.os.Build;
-import android.os.Handler;
-import android.support.v4.widget.ScrollerCompat;
-import android.util.Log;
 import android.view.View;
-import android.view.animation.Animation;
 import android.view.animation.DecelerateInterpolator;
-import android.view.animation.Interpolator;
-import android.view.animation.LinearInterpolator;
-import android.view.animation.Transformation;
 import android.widget.Scroller;
 
-public class NewScrollManager{
+public class NewScrollManager implements Runnable{
     private int animationDuration;
     private Bridge bridge;
     private Scroller scroller;
@@ -54,14 +46,14 @@ public class NewScrollManager{
 
         running = true;
         rollback = startX > endX;
-
         scroller.startScroll(startX, startY, endX-startX, endY-startY, animationDuration);
-        bridge.getView().invalidate();
+        bridge.getView().post(this);
 
         return true;
     }
 
-    public void computeScroll(){
+    @Override
+    public void run() {
         if(!running){
             return;
         }
@@ -72,18 +64,21 @@ public class NewScrollManager{
             if(scrollListener != null){
                 scrollListener.onScrollEnd();
             }
-            Log.w("动画", "结束了");
             return;
         }
 
         // 更新
         bridge.setTargetViewHeightDecrement(scroller.getCurrY());
         bridge.updateCurrentOffset(scroller.getCurrX(), rollback, false);
-        bridge.getView().invalidate();
+
+        bridge.getView().post(this);
     }
 
     public void abort(){
-        scroller.abortAnimation();
+        if(!scroller.isFinished()){
+            scroller.abortAnimation();
+        }
+        bridge.getView().removeCallbacks(this);
         running = false;
     }
 

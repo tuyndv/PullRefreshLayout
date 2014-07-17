@@ -25,7 +25,6 @@ import android.view.MotionEvent;
 import android.view.View;
 import android.view.ViewConfiguration;
 import android.view.ViewGroup;
-import android.view.animation.Interpolator;
 import android.widget.AbsListView;
 
 /**
@@ -147,14 +146,6 @@ public class PullRefreshLayout extends ViewGroup implements NewScrollManager.Bri
         }
     }
 
-    @Override
-    public void computeScroll() {
-        super.computeScroll();
-        if(mScrollManager != null){
-            mScrollManager.computeScroll();
-        }
-    }
-
     /**
      * 延迟启动刷新
      */
@@ -213,8 +204,8 @@ public class PullRefreshLayout extends ViewGroup implements NewScrollManager.Bri
 
             case MotionEvent.ACTION_UP:
             case MotionEvent.ACTION_CANCEL:
-                mIsBeingDragged = false;
                 activePointerId = INVALID_POINTER;
+                mIsBeingDragged = false;
                 break;
         }
 
