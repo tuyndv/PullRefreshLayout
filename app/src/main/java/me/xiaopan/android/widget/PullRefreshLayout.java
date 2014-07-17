@@ -127,7 +127,6 @@ public class PullRefreshLayout extends ViewGroup implements NewScrollManager.Bri
         childBottom = childTop + childView.getMeasuredHeight() - targetViewHeightDecrement;
         childView.layout(childLeft, childTop, childRight, childBottom);
         targetView = childView;
-        Log.e("onLayout", "currentOffset="+currentOffset);
 
         // 布局第二个子视图
         if(getChildCount() < 2) return;
@@ -280,7 +279,6 @@ public class PullRefreshLayout extends ViewGroup implements NewScrollManager.Bri
                         startRefresh(); // 如果是等待刷新就立马开启刷新
                     }else{
                         mScrollManager.startScroll(-1, true); // 否则就回滚
-//                        mScrollManager.startScroll(getPaddingTop(), true);
                     }
                 }else{
                     mScrollManager.startScroll(-1, true); // 否则就回滚
@@ -369,7 +367,6 @@ public class PullRefreshLayout extends ViewGroup implements NewScrollManager.Bri
         }else{
             if(newCurrentOffset > originalOffset){
                 newCurrentOffset = originalOffset;
-                Log.i("", "程玲了");
             }
         }
         currentOffset = newCurrentOffset;

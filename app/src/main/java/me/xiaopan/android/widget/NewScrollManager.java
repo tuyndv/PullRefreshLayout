@@ -36,38 +36,26 @@ public class NewScrollManager{
     public boolean startScroll(int newOriginalOffset, boolean diminish){
         abort();
 
-        int from2;
-        int to2;
-
-        if(newOriginalOffset != bridge.getOriginalOffset() && newOriginalOffset >= 0){
-            if(diminish){
-                from2 = 0;
-                to2 = Math.abs(newOriginalOffset - bridge.getOriginalOffset());
-            }else{
-                from2 = Math.abs(newOriginalOffset - bridge.getOriginalOffset());
-                to2 = 0;
-            }
-            bridge.setOriginalOffset(newOriginalOffset);
-        }else{
-            from2 = 0;
-            to2 = 0;
-        }
-
-        if(bridge.getCurrentOffset() == bridge.getOriginalOffset()){
-            return false;
-        }
-        running = true;
         int startX = bridge.getCurrentOffset();
         int endX = bridge.getOriginalOffset();
-        int dX = endX - startX;
-        int startY = from2;
-        int endY = to2;
-        int dY = to2 - from2;
+        int startY = 0;
+        int endY = 0;
+        if(newOriginalOffset != bridge.getOriginalOffset() && newOriginalOffset >= 0){
+            if(diminish){
+                startY = 0;
+                endY = Math.abs(newOriginalOffset - bridge.getOriginalOffset());
+            }else{
+                startY = Math.abs(newOriginalOffset - bridge.getOriginalOffset());
+                endY = 0;
+            }
+            bridge.setOriginalOffset(newOriginalOffset);
+            endX = newOriginalOffset;
+        }
+
+        running = true;
         rollback = startX > endX;
 
-        Log.w("开始执行动画", "整体："+startX+(dX>0?"+":"-")+Math.abs(dX)+"="+endX+"; TargetViewHeight："+startY+(dY>0?"+":"-")+Math.abs(dY)+"="+endY);
-
-        scroller.startScroll(startX, startY, dX, dY, animationDuration);
+        scroller.startScroll(startX, startY, endX-startX, endY-startY, animationDuration);
         bridge.getView().invalidate();
 
         return true;
@@ -80,6 +68,7 @@ public class NewScrollManager{
 
         // 正常结束了
         if(!scroller.computeScrollOffset()){
+            running = false;
             if(scrollListener != null){
                 scrollListener.onScrollEnd();
             }
@@ -87,14 +76,9 @@ public class NewScrollManager{
             return;
         }
 
-        // 计算新的基准线位置和TargetView高度的减量
-        int newCurrentOffset = scroller.getCurrX();
-        int newTargetViewHeightDecrement = scroller.getCurrY();
-        Log.d("动画执行中", "newCurrentOffset=" + newCurrentOffset + "; newTargetViewHeightDecrement" + newTargetViewHeightDecrement);
-
         // 更新
-        bridge.setTargetViewHeightDecrement(newTargetViewHeightDecrement);
-        bridge.updateCurrentOffset(newCurrentOffset, rollback, false);
+        bridge.setTargetViewHeightDecrement(scroller.getCurrY());
+        bridge.updateCurrentOffset(scroller.getCurrX(), rollback, false);
         bridge.getView().invalidate();
     }
 
