@@ -17,14 +17,11 @@
 package me.xiaopan.android.pullrefreshlayout;
 
 import android.content.res.Configuration;
-import android.os.Build;
 import android.os.Bundle;
 import android.support.v4.app.ActionBarDrawerToggle;
 import android.support.v4.app.Fragment;
-import android.support.v4.app.FragmentManager;
 import android.support.v4.view.GravityCompat;
 import android.support.v4.widget.DrawerLayout;
-import android.util.Log;
 import android.view.View;
 import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
@@ -54,7 +51,7 @@ public class MainActivity extends InjectActionBarActivity{
         super.onCreate(savedInstanceState);
 
         mTitle = mDrawerTitle = getTitle();
-        mPlanetTitles = new String[]{"ScrollView", "ListView", "WebView", "GridView", "ExpandableListView"};
+        mPlanetTitles = new String[]{"ListView", "ExpandableListView", "GridView", "WebView", "ScrollView"};
 
         // set a custom shadow that overlays the main content when the drawer opens
         mDrawerLayout.setDrawerShadow(R.drawable.drawer_shadow, GravityCompat.START);
@@ -123,23 +120,23 @@ public class MainActivity extends InjectActionBarActivity{
         Fragment fragment = null;
         switch(position){
             case 0 :{
-                fragment = new ScrollViewFragment();
-                break;
-            }
-            case 1 :{
                 fragment = new ListViewFragment();
                 break;
             }
-            case 2 :{
-                fragment = new WebViewFragment();
+            case 1 :{
+                fragment = new ExpandableListViewFragment();
                 break;
             }
-            case 3 :{
+            case 2 :{
                 fragment = new GridViewFragment();
                 break;
             }
+            case 3 :{
+                fragment = new WebViewFragment();
+                break;
+            }
             case 4 :{
-                fragment = new ExpandableListViewFragment();
+                fragment = new ScrollViewFragment();
                 break;
             }
         }

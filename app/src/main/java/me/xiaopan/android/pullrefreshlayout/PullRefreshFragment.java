@@ -28,7 +28,6 @@ import android.view.View;
 
 import me.xiaopan.android.inject.InjectView;
 import me.xiaopan.android.inject.app.InjectFragment;
-import me.xiaopan.android.pullrefreshlayout.widget.MyPullRefreshHeader;
 import me.xiaopan.android.widget.PullRefreshLayout;
 
 public abstract class PullRefreshFragment extends InjectFragment{
@@ -44,7 +43,6 @@ public abstract class PullRefreshFragment extends InjectFragment{
     public void onViewCreated(View view, Bundle savedInstanceState) {
         super.onViewCreated(view, savedInstanceState);
 
-        pullRefreshLayout.setPullRefreshHeaderClass(MyPullRefreshHeader.class);
         pullRefreshLayout.setOnRefreshListener(new PullRefreshLayout.OnRefreshListener() {
             @Override
             public void onRefresh() {

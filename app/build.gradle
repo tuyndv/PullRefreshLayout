@@ -8,8 +8,8 @@ android {
         applicationId "me.xiaopan.android.pullrefreshlayout"
         minSdkVersion 9
         targetSdkVersion 20
-        versionCode 100
-        versionName "1.0.0"
+        versionCode 110
+        versionName "1.1.0"
     }
     buildTypes {
         release {

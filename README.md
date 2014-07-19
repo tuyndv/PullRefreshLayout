@@ -11,7 +11,7 @@ PullRefreshLayout是Android上的一个下拉刷新控件，主要用于实现�
 
 ## Sample App
 >* [Get it on Google Play](https://play.google.com/store/apps/details?id=me.xiaopan.android.pullrefreshlayout)
->* [Download APK](https://github.com/xiaopansky/PullRefreshLayout/raw/master/releases/PullRefreshLayout-1.0.0.apk)
+>* [Download APK](https://github.com/xiaopansky/PullRefreshLayout/raw/master/releases/PullRefreshLayout-1.1.0.apk)
 
 ##Usage guide
 #### 1. 自定义下拉刷新头
@@ -24,7 +24,7 @@ PullRefreshLayout是Android上的一个下拉刷新控件，主要用于实现�
 ***参考示例***
 
 >* [refresh_header.xml](https://github.com/xiaopansky/PullRefreshLayout/raw/master/app/src/main/res/layout/refresh_header.xml)
->* [MyPullRefreshHeader](https://github.com/xiaopansky/PullRefreshLayout/raw/master/app/src/main/java/me/xiaopan/android/pullrefreshlayout/widget/MyPullRefreshHeader.java)
+>* [MyPullRefreshHeader.java](https://github.com/xiaopansky/PullRefreshLayout/raw/master/app/src/main/java/me/xiaopan/android/pullrefreshlayout/widget/MyPullRefreshLayout.java)
 
 #### 2.使用自定义的下拉刷新头（MyPullRefreshHeader）
 
@@ -96,6 +96,7 @@ public class MyPullRefreshLayout extends PullRefreshLayout {
         android:background="@android:color/white"/>
 </me.xiaopan.android.pullrefreshlayout.widget.MyPullRefreshLayout>
 ```
+示例：[MyPullRefreshLayout.java](https://github.com/xiaopansky/PullRefreshLayout/raw/master/app/src/main/java/me/xiaopan/android/pullrefreshlayout/widget/MyPullRefreshLayout.java)
 
 #### 3. 处理刷新事件
 ***启动或停止刷新***
@@ -123,20 +124,25 @@ pullRefreshLayout.setOnRefreshListener(new PullRefreshLayout.OnRefreshListener()
 #### 4. 扩展功能
 >* isRefreshing() 判断是否正在刷新
 >* setAnimationDuration(int) 设置回滚动画持续时间
->* setAnimationInterpolator(Interpolator) 设置回滚动画插值器
 >* setElasticForce() 设置拉力强度，取值范围是[0.0f-1.0f]，值越小拉力越强，用户越难拉
 
 #### 5. 注意事项：
 >* PullRefreshLayout必须包含1个或2个子View才能正常工作，少了或者多了都会抛出异常
 >* 必须添加PullRefreshHeader才能看到下拉效果
->* 必须设置OnRefreshListene在下拉的时候才会触发刷新事件
+>* 必须设置OnRefreshListener在下拉的时候才会触发刷新事件
 
 ##Downloads
->* [android-pull-refresh-layout-1.0.0.jar](https://github.com/xiaopansky/PullRefreshLayout/raw/master/releases/android-pull-refresh-layout-1.0.0.jar)
->* [android-pull-refresh-layout-1.0.0-with-src.jar](https://github.com/xiaopansky/PullRefreshLayout/raw/master/releases/android-pull-refresh-layout-1.0.0-with-src.jar)
+>* [android-pull-refresh-layout-1.1.0.jar](https://github.com/xiaopansky/PullRefreshLayout/raw/master/releases/android-pull-refresh-layout-1.1.0.jar)
+>* [android-pull-refresh-layout-1.1.0-with-src.jar](https://github.com/xiaopansky/PullRefreshLayout/raw/master/releases/android-pull-refresh-layout-1.1.0-with-src.jar)
 
 dependencies
->* [android-support-v4.jar](https://github.com/xiaopansky/HappyImageLoader/raw/master/libs/android-support-v4.jar)
+>* [android-support-v4.jar](https://github.com/xiaopansky/HappyImageLoader/raw/master/libs/android-support-v4.jar) (required)
+
+##Change log
+####1.1.0
+>* 采用Scroller来使用滚动效果，让滚动更加平滑
+>* 改变刷新状态切换策略，之前是在弹起的时候切换，现在是弹起的时候仅开启回滚动画，然后在动画完毕的时候再切换
+>* 允许中断回滚动画
 
 ##License
 ```java
