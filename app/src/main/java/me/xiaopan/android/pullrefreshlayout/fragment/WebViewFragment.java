@@ -64,7 +64,7 @@ public class WebViewFragment extends PullRefreshFragment {
     protected void onRefreshContent() {
         String url = webView.getUrl();
         if(url == null){
-            url = "http://www.baidu.com";
+            url = "http://www.miui.com";
         }
         webView.loadUrl(url);
     }
